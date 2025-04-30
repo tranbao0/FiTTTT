@@ -1,99 +1,39 @@
 //
 //  ContentView.swift
-//  Fitness App
+//  FiTTTTv1
+//
+//  Created by Henry To on 4/30/25.
+//
 
 import SwiftUI
-
-// User model
-struct User: Identifiable {
-    let id = UUID()
-    var username: String
-    var password: String
-}
+import FirebaseAuth
 
 struct ContentView: View {
-    
-    @State private var users: [User] = [] // Stores registered users
-    @State private var username: String = ""
-    @State private var password: String = ""
-    @State private var isRegistered: Bool = false // Switch between Sign-Up and Login
-    @State private var isAuthenticated: Bool = false // Track successful login
-    @State private var showAlert: Bool = false
-    @State private var alertMessage: String = ""
+    @State private var isLoggedIn = false
+    // if user is logged in or not
     
     var body: some View {
-        NavigationView {
-            VStack(spacing: 20) {
-                Text(isRegistered ? "Login" : "Sign Up")
-                    .font(.largeTitle)
-                    .bold()
-                
-                VStack(spacing: 10) {
-                    TextField("Username", text: $username)
-                        .textFieldStyle(RoundedBorderTextFieldStyle())
-                        .padding()
-                    
-                    SecureField("Password", text: $password)
-                        .textFieldStyle(RoundedBorderTextFieldStyle())
-                        .padding()
+        VStack {
+            if isLoggedIn {
+                // Show content after login
+                VStack {
+                    Image(systemName: "globe")
+                        .imageScale(.large)
+                        .foregroundStyle(.tint)
+                    Text("Hello, world!")
+                    // more features for logged users
                 }
-                
-                Button(action: {
-                    isRegistered ? loginUser() : registerUser()
-                }) {
-                    Text(isRegistered ? "Login" : "Sign Up")
-                        .font(.headline)
-                        .foregroundColor(.white)
-                        .padding()
-                        .frame(maxWidth: .infinity)
-                        .background(Color.blue)
-                        .cornerRadius(10)
-                        .shadow(radius: 2)
-                }
-                .padding(.horizontal)
-                .alert(isPresented: $showAlert) {
-                    Alert(title: Text("Message"), message: Text(alertMessage), dismissButton: .default(Text("OK")))
-                }
-                
-                Button(action: {
-                    isRegistered.toggle() // Switch between Sign-Up and Login
-                }) {
-                    Text(isRegistered ? "Don't have an account? Sign Up" : "Already have an account? Login")
-                        .foregroundColor(.blue)
-                        .padding()
-                }
-                
-                // Navigate to HomeScreen.swift after successful login
-                NavigationLink(destination: HomeScreen(), isActive: $isAuthenticated) {
-                    EmptyView()
-                }
-            }
-            .padding()
-            .navigationTitle("Fitness App")
-        }
-    }
-    
-    func registerUser() {
-        if !username.isEmpty && !password.isEmpty {
-            if users.contains(where: { $0.username == username }) {
-                alertMessage = "Username already exists!"
+                .padding()
             } else {
-                users.append(User(username: username, password: password))
-                alertMessage = "Account created successfully! Please log in."
-                isRegistered = true // Switch to login screen
+                // preview for not logged in user
+                LoginView(isLoggedIn: $isLoggedIn) // Pass the binding here
             }
-        } else {
-            alertMessage = "Please enter a valid username and password."
         }
-        showAlert = true
-    }
-    
-    func loginUser() {
-        if users.contains(where: { $0.username == username && $0.password == password }) {
-            isAuthenticated = true
-        } else {
-            alertMessage = "Invalid username or password!"
-            showAlert = true
+        .onAppear {
+            // checks to see if user is logged in
+            if Auth.auth().currentUser != nil {
+                isLoggedIn = true
+            }
         }
     }
 }
