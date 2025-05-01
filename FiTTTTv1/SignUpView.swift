@@ -1,12 +1,16 @@
 // SignUpView.swift
 import SwiftUI
 import FirebaseAuth
+import Firebase
+import FirebaseFirestore
+
 
 struct SignUpView: View {
    @State private var email = ""
    @State private var password = ""
    @State private var confirmPassword = ""
    @State private var errorMessage = ""
+   @State private var username = ""
    @State private var showLoginView = false
    
    var body: some View {
@@ -22,7 +26,13 @@ struct SignUpView: View {
                .cornerRadius(10)
                .keyboardType(.emailAddress)
                .autocapitalization(.none)
-           
+
+            TextField("Username", text: $username)
+                .padding()
+                .background(Color.gray.opacity(0.1))
+                .cornerRadius(10)
+                .autocapitalization(.none)
+
            SecureField("Password", text: $password)
                .padding()
                .background(Color.gray.opacity(0.1))
@@ -62,30 +72,80 @@ struct SignUpView: View {
        }
        .padding()
    }
+
+   // Checks if username is valid
+   func isValidUsername(_ username: String) -> Bool {
+        let pattern = "^[a-zA-Z0-9._]{6,}$"
+        return NSPredicate(format: "SELF MATCHES %@", pattern).evaluate(with: username)
+    }
+
+    // Checks if username exists within firestore
+    func checkUsernameExists(_ username: String, completion: @escaping (Bool) -> Void) {
+     l  et db = Firestore.firestore()
+        db.collection("users").whereField("username", isEqualTo: username).getDocuments { snapshot, error in
+            if let error = error {
+                print("Error checking username: \(error)")
+                completion(true) // assume taken if there's an error
+            } else {
+                completion(snapshot?.documents.count ?? 0 > 0)
+            }      
+        }
+    }
+
    
    // Creates a new user account with Firebase authentication
    private func registerUser() {
-       if email.isEmpty || password.isEmpty {
-           errorMessage = "Please fill in all fields"
-           return
-       }
-       
-       if !email.isValidEmail {
-           errorMessage = "Please enter a valid email"
-           return
-       }
-       
-       if password != confirmPassword {
-           errorMessage = "Passwords don't match"
-           return
-       }
-       
-       Auth.auth().createUser(withEmail: email, password: password) { result, error in
-           if let error = error {
-               errorMessage = "Error: \(error.localizedDescription)"
-           } else {
-               showLoginView = true
-           }
-       }
-   }
+        if email.isEmpty || username.isEmpty || password.isEmpty || confirmPassword.isEmpty {
+            errorMessage = "Please fill in all fields"
+            return
+        }
+
+        if !email.isValidEmail {
+            errorMessage = "Please enter a valid email"
+            return
+        }
+
+        if !isValidUsername(username) {
+            errorMessage = "Invalid username. Use only letters, numbers, '.', '_' (6+ characters)"
+            return
+        }
+
+        if !isValidPassword(password) {
+            errorMessage = "Password must be 12+ chars with upper, lower, number, and special character"
+            return
+        }
+
+        if password != confirmPassword {
+            errorMessage = "Passwords don't match"
+            return
+        }
+
+        // Check if username is taken
+        checkUsernameExists(username) { exists in
+            if exists {
+                errorMessage = "Username is already taken"
+                return
+            }
+
+            Auth.auth().createUser(withEmail: email, password: password) { result, error in
+                if let error = error {
+                    errorMessage = "Error: \(error.localizedDescription)"
+                } else if let user = result?.user {
+                    let db = Firestore.firestore()
+                    db.collection("users").document(user.uid).setData([
+                        "email": user.email ?? "",
+                        "uid": user.uid,
+                        "username": username,
+                        "createdAt": Timestamp()
+                    ]) { err in
+                        if let err = err {
+                            errorMessage = "Error saving user data: \(err.localizedDescription)"
+                        } else {
+                            showLoginView = true
+                        }
+                    }
+                }
+            }
+        }
+    }
 }
