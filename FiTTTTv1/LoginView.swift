@@ -1,7 +1,7 @@
 import SwiftUI
 import FirebaseAuth
 
-// A curved shape for the bottom white region
+// Creates a curved shape for the bottom section of the login screen
 struct BottomCurveShape: Shape {
     func path(in rect: CGRect) -> Path {
         var path = Path()
@@ -20,12 +20,12 @@ struct BottomCurveShape: Shape {
 }
 
 struct LoginScreen: View {
-    // Binding to track authentication state
     @Binding var isLoggedIn: Bool
     
     @State private var email: String = ""
     @State private var password: String = ""
     @State private var errorMessage: String = ""
+    @State private var showSignUpView = false
 
     var body: some View {
         ZStack {
@@ -48,19 +48,19 @@ struct LoginScreen: View {
                         .padding(.leading, 110)
                 }
 
-                Text("Welcome!")
+                Text("Welcome Back!")
                     .font(.largeTitle)
                     .foregroundColor(.white)
                     .padding(.top, 16)
 
                 VStack(alignment: .leading, spacing: 24) {
-                    // Email field
                     VStack(alignment: .leading, spacing: 8) {
                         Text("Email")
                             .font(.title3)
                             .foregroundColor(.black)
                         TextField("example@gmail.com", text: $email)
                             .autocapitalization(.none)
+                            .keyboardType(.emailAddress)
                             .disableAutocorrection(true)
                             .padding(.bottom, 8)
                             .overlay(
@@ -71,7 +71,6 @@ struct LoginScreen: View {
                             )
                     }
 
-                    // Password field
                     VStack(alignment: .leading, spacing: 8) {
                         Text("Password")
                             .font(.title3)
@@ -86,7 +85,6 @@ struct LoginScreen: View {
                             )
                     }
                     
-                    // Error message
                     if !errorMessage.isEmpty {
                         Text(errorMessage)
                             .foregroundColor(.red)
@@ -98,7 +96,6 @@ struct LoginScreen: View {
                 .padding(.horizontal, 32)
                 .padding(.top, 17)
 
-                // Login button with Firebase authentication
                 Button(action: loginUser) {
                     Text("Login")
                         .font(.headline)
@@ -115,7 +112,6 @@ struct LoginScreen: View {
                     Text("Don't have an account?")
                         .font(.footnote)
                         .foregroundColor(.gray)
-                    // Navigation to registration
                     NavigationLink(destination: SignUpView()) {
                         Text("Register")
                             .font(.body)
@@ -128,9 +124,10 @@ struct LoginScreen: View {
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         }
+        .navigationBarBackButtonHidden(true)
     }
     
-    // Firebase login function
+    // Authenticates user with Firebase and navigates to splash screen on success
     private func loginUser() {
         if email.isEmpty || password.isEmpty {
             errorMessage = "Please fill in both fields."
@@ -142,12 +139,10 @@ struct LoginScreen: View {
             return
         }
         
-        // Firebase authentication
         Auth.auth().signIn(withEmail: email, password: password) { result, error in
             if let error = error {
                 errorMessage = "Error: \(error.localizedDescription)"
             } else {
-                // Success - update binding
                 isLoggedIn = true
             }
         }
@@ -156,15 +151,10 @@ struct LoginScreen: View {
 
 // Email validation extension
 extension String {
+    // Validates email format using regex pattern
     var isValidEmail: Bool {
         let emailRegEx = "[A-Z0-9a-z._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}"
         let emailTest = NSPredicate(format: "SELF MATCHES %@", emailRegEx)
         return emailTest.evaluate(with: self)
-    }
-}
-
-struct LoginScreen_Previews: PreviewProvider {
-    static var previews: some View {
-        LoginScreen(isLoggedIn: .constant(false))
     }
 }
