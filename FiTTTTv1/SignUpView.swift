@@ -21,11 +21,12 @@ struct SignUpView: View {
                .padding(.bottom, 30)
            
            TextField("Email", text: $email)
-               .padding()
-               .background(Color.gray.opacity(0.1))
-               .cornerRadius(10)
-               .keyboardType(.emailAddress)
-               .autocapitalization(.none)
+                .padding()
+                .background(Color.gray.opacity(0.1))
+                .textContentType(.none)
+                .keyboardType(.emailAddress)
+                .autocapitalization(.none)
+                .disableAutocorrection(true)
 
             TextField("Username", text: $username)
                 .padding()
@@ -37,6 +38,9 @@ struct SignUpView: View {
                .padding()
                .background(Color.gray.opacity(0.1))
                .cornerRadius(10)
+                .textContentType(.none)
+                .disableAutocorrection(true)
+                .autocapitalization(.none)
            
            SecureField("Confirm Password", text: $confirmPassword)
                .padding()
@@ -78,8 +82,6 @@ struct SignUpView: View {
         let pattern = "^[A-Z0-9a-z._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$"
         return NSPredicate(format: "SELF MATCHES %@", pattern).evaluate(with: email)
     }
-
-
 
    // Checks if username is valid
    func isValidUsername(_ username: String) -> Bool {
