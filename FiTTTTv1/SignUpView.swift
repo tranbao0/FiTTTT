@@ -157,7 +157,9 @@ struct SignUpView: View {
                         if let err = err {
                             errorMessage = "Error saving user data: \(err.localizedDescription)"
                         } else {
-                            showLoginView = true
+                            DispatchQueue.main.async {
+                                showLoginView = true
+                            }
                         }
                     }
                 }
