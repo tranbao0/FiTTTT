@@ -10,7 +10,7 @@ struct BottomCurveShape: Shape {
         path.move(to: CGPoint(x: 0, y: startY))
         path.addQuadCurve(
             to: CGPoint(x: rect.width, y: endY),
-            control: CGPoint(x: rect.width / 2, y: rect.height * 0.6)
+            control: CGPoint(x: rect.width / 2, y: rect.height * 0.47)
         )
         path.addLine(to: CGPoint(x: rect.width, y: rect.height))
         path.addLine(to: CGPoint(x: 0, y: rect.height))
@@ -21,124 +21,129 @@ struct BottomCurveShape: Shape {
 
 struct LoginScreen: View {
     @Binding var isLoggedIn: Bool
-    
+
     @State private var email: String = ""
     @State private var password: String = ""
     @State private var errorMessage: String = ""
     @State private var showSignUpView = false
 
     var body: some View {
-        ZStack {
-            Color.black
-                .ignoresSafeArea()
-            BottomCurveShape()
-                .fill(Color.white)
-                .ignoresSafeArea()
+        NavigationStack {
+            ZStack {
+                Color.black
+                    .ignoresSafeArea()
+                BottomCurveShape()
+                    .fill(Color.white)
+                    .ignoresSafeArea()
 
-            VStack(alignment: .center, spacing: 24) {
-                VStack(spacing: 8) {
-                    Image("FiTTTTLogo")
-                        .resizable()
-                        .aspectRatio(contentMode: .fit)
-                        .frame(width: 300, height: 75)
-                        .padding(.top, 60)
-                    Text("Accountability in Fitness")
-                        .font(.subheadline)
+                VStack(alignment: .center, spacing: 24) {
+                    VStack(spacing: 8) {
+                        Image("FiTTTTLogo")
+                            .resizable()
+                            .aspectRatio(contentMode: .fit)
+                            .frame(width: 300, height: 75)
+                            .padding(.top, 60)
+                        Text("Accountability in Fitness")
+                            .font(.subheadline)
+                            .foregroundColor(.white)
+                            .padding(.leading, 110)
+                    }
+
+                    Text("Welcome Back!")
+                        .font(.largeTitle)
                         .foregroundColor(.white)
-                        .padding(.leading, 110)
-                }
+                        .padding(.top, 16)
 
-                Text("Welcome Back!")
-                    .font(.largeTitle)
-                    .foregroundColor(.white)
-                    .padding(.top, 16)
+                    VStack(alignment: .leading, spacing: 24) {
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("Email")
+                                .font(.title3)
+                                .foregroundColor(.black)
+                            TextField("example@gmail.com", text: $email)
+                                .autocapitalization(.none)
+                                .keyboardType(.emailAddress)
+                                .disableAutocorrection(true)
+                                .padding(.bottom, 8)
+                                .overlay(
+                                    Rectangle()
+                                        .frame(height: 1)
+                                        .foregroundColor(.black),
+                                    alignment: .bottom
+                                )
+                        }
 
-                VStack(alignment: .leading, spacing: 24) {
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text("Email")
-                            .font(.title3)
-                            .foregroundColor(.black)
-                        TextField("example@gmail.com", text: $email)
-                            .autocapitalization(.none)
-                            .keyboardType(.emailAddress)
-                            .disableAutocorrection(true)
-                            .padding(.bottom, 8)
-                            .overlay(
-                                Rectangle()
-                                    .frame(height: 1)
-                                    .foregroundColor(.black),
-                                alignment: .bottom
-                            )
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("Password")
+                                .font(.title3)
+                                .foregroundColor(.black)
+                            SecureField("••••••••••••••••", text: $password)
+                                .padding(.bottom, 8)
+                                .overlay(
+                                    Rectangle()
+                                        .frame(height: 1)
+                                        .foregroundColor(.black),
+                                    alignment: .bottom
+                                )
+                        }
+
+                        if !errorMessage.isEmpty {
+                            Text(errorMessage)
+                                .foregroundColor(.red)
+                                .font(.caption)
+                        }
+
+                        Spacer().frame(height: 40)
                     }
+                    .padding(.horizontal, 32)
+                    .padding(.top, 17)
 
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text("Password")
-                            .font(.title3)
-                            .foregroundColor(.black)
-                        SecureField("••••••••••••••••", text: $password)
-                            .padding(.bottom, 8)
-                            .overlay(
-                                Rectangle()
-                                    .frame(height: 1)
-                                    .foregroundColor(.black),
-                                alignment: .bottom
-                            )
+                    Button(action: loginUser) {
+                        Text("Login")
+                            .font(.headline)
+                            .foregroundColor(.white)
+                            .frame(maxWidth: .infinity)
+                            .padding()
+                            .background(Color.black)
+                            .cornerRadius(28)
                     }
-                    
-                    if !errorMessage.isEmpty {
-                        Text(errorMessage)
-                            .foregroundColor(.red)
-                            .font(.caption)
+                    .padding(.horizontal, 32)
+
+                    HStack {
+                        Spacer()
+                        Text("Don't have an account?")
+                            .font(.footnote)
+                            .foregroundColor(.gray)
+                        NavigationLink(destination: SignUpView()) {
+                            Text("Sign Up")
+                                .font(.body)
+                                .underline()
+                                .foregroundColor(.black)
+                        }
                     }
-
-                    Spacer().frame(height: 40)
+                    .padding(.horizontal, 32)
+                    .padding(.vertical, 24)
                 }
-                .padding(.horizontal, 32)
-                .padding(.top, 17)
-
-                Button(action: loginUser) {
-                    Text("Login")
-                        .font(.headline)
-                        .foregroundColor(.white)
-                        .frame(maxWidth: .infinity)
-                        .padding()
-                        .background(Color.black)
-                        .cornerRadius(28)
-                }
-                .padding(.horizontal, 32)
-
-                HStack {
-                    Spacer()
-                    Text("Don't have an account?")
-                        .font(.footnote)
-                        .foregroundColor(.gray)
-                    NavigationLink(destination: SignUpView()) {
-                        Text("Register")
-                            .font(.body)
-                            .underline()
-                            .foregroundColor(.black)
-                    }
-                }
-                .padding(.horizontal, 32)
-                .padding(.vertical, 24)
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
             }
-            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+            .navigationBarBackButtonHidden(true)
+            .navigationDestination(isPresented: $isLoggedIn) {
+                CalendarView()
+            }
         }
-        .navigationBarBackButtonHidden(true)
     }
-    
-    // Authenticates user with Firebase and navigates to splash screen on success
+
+    // Authenticates user with Firebase and navigates on success
     private func loginUser() {
         if email.isEmpty || password.isEmpty {
             errorMessage = "Please fill in both fields."
             return
         }
-        
+
         if !email.isValidEmail {
             errorMessage = "Please enter a valid email address."
             return
         }
-        
+
         Auth.auth().signIn(withEmail: email, password: password) { result, error in
             if let error = error {
                 errorMessage = "Error: \(error.localizedDescription)"
@@ -151,10 +156,15 @@ struct LoginScreen: View {
 
 // Email validation extension
 extension String {
-    // Validates email format using regex pattern
     var isValidEmail: Bool {
         let emailRegEx = "[A-Z0-9a-z._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}"
         let emailTest = NSPredicate(format: "SELF MATCHES %@", emailRegEx)
         return emailTest.evaluate(with: self)
+    }
+}
+
+struct LoginScreen_Previews: PreviewProvider {
+    static var previews: some View {
+        LoginScreen(isLoggedIn: .constant(false))
     }
 }

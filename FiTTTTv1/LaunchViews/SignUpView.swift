@@ -1,169 +1,259 @@
-// SignUpView.swift
 import SwiftUI
 import FirebaseAuth
-import Firebase
 import FirebaseFirestore
 
+/// A custom Bezier curve shape for the white bottom region
+struct BottomCurveShapetwo: Shape {
+    func path(in rect: CGRect) -> Path {
+        var path = Path()
+        let startY = rect.height * 0.3
+        let endY = rect.height * 0.42
+        path.move(to: CGPoint(x: 0, y: startY))
+        path.addQuadCurve(
+            to: CGPoint(x: rect.width, y: endY),
+            control: CGPoint(x: rect.width / 2, y: rect.height * 0.4)
+        )
+        path.addLine(to: CGPoint(x: rect.width, y: rect.height))
+        path.addLine(to: CGPoint(x: 0, y: rect.height))
+        path.closeSubpath()
+        return path
+    }
+}
 
 struct SignUpView: View {
-   @State private var email = ""
-   @State private var password = ""
-   @State private var confirmPassword = ""
-   @State private var errorMessage = ""
-   @State private var username = ""
-   @State private var showLoginView = false
-   
-   var body: some View {
-       VStack(spacing: 20) {
-           Text("Create Account")
-               .font(.largeTitle)
-               .fontWeight(.bold)
-               .padding(.bottom, 30)
-           
-           TextField("Email", text: $email)
-                .padding()
-                .background(Color.gray.opacity(0.1))
-                .textContentType(.none)
-                .keyboardType(.emailAddress)
-                .autocapitalization(.none)
-                .disableAutocorrection(true)
+    // MARK: - UI State
+    @State private var email = ""
+    @State private var username = ""
+    @State private var password = ""
+    @State private var confirmPassword = ""
+    @State private var errorMessage = ""
+    @State private var showLoginView = false
+    @State private var showSuccessAlert = false
 
-            TextField("Username", text: $username)
-                .padding()
-                .background(Color.gray.opacity(0.1))
-                .cornerRadius(10)
-                .autocapitalization(.none)
+    var body: some View {
+        ZStack {
+            // Background
+            Color.black.ignoresSafeArea()
+            BottomCurveShapetwo()
+                .fill(Color.white)
+                .ignoresSafeArea()
 
-           SecureField("Password", text: $password)
-               .padding()
-               .background(Color.gray.opacity(0.1))
-               .cornerRadius(10)
-                .textContentType(.none)
-                .disableAutocorrection(true)
-                .autocapitalization(.none)
-           
-           SecureField("Confirm Password", text: $confirmPassword)
-               .padding()
-               .background(Color.gray.opacity(0.1))
-               .cornerRadius(10)
-               .padding(.bottom, 10)
-           
-           if !errorMessage.isEmpty {
-               Text(errorMessage)
-                   .foregroundColor(.red)
-                   .padding(.bottom, 10)
-           }
-           
-           Button(action: registerUser) {
-               Text("Sign Up")
-                   .foregroundColor(.white)
-                   .frame(width: 250, height: 50)
-                   .background(Color.blue)
-                   .cornerRadius(10)
-           }
-           
-           Button("Already have an account? Log In") {
-               showLoginView = true
-           }
-           .foregroundColor(.blue)
-           .padding(.top, 20)
-           
-           NavigationLink(isActive: $showLoginView) {
-               LoginScreen(isLoggedIn: .constant(false))
-           } label: {
-               EmptyView()
-           }
-       }
-       .padding()
-   }
+            // Content
+            VStack(alignment: .center, spacing: 24) {
+                // Logo & Subtitle
+                VStack(spacing: 8) {
+                    Image("FiTTTTLogo")
+                        .resizable()
+                        .aspectRatio(contentMode: .fit)
+                        .frame(width: 300, height: 75)
+                        .padding(.top, 60)
+                    Text("Accountability in Fitness")
+                        .font(.subheadline)
+                        .foregroundColor(.white)
+                        .padding(.leading, 110)
+                }
 
-    // Checks if email is in valid format
-    func isValidEmail(_ email: String) -> Bool {
-        let pattern = "^[A-Z0-9a-z._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$"
+                Text("Welcome!")
+                    .font(.largeTitle)
+                    .foregroundColor(.white)
+                    .padding(.top, 16)
+
+                // Form fields
+                VStack(alignment: .leading, spacing: 16) {
+                    // Email field with gray placeholder
+                    Group {
+                        Text("Email")
+                            .font(.title3)
+                            .foregroundColor(.black)
+                        ZStack(alignment: .leading) {
+                            if email.isEmpty {
+                                Text("example@gmail.com")
+                                    .foregroundColor(.gray)
+                            }
+                            TextField("", text: $email)
+                                .autocapitalization(.none)
+                                .keyboardType(.emailAddress)
+                                .disableAutocorrection(true)
+                                .foregroundColor(.black)
+                        }
+                        .padding(.bottom, 8)
+                        .overlay(
+                            Rectangle().frame(height: 1).foregroundColor(.black),
+                            alignment: .bottom
+                        )
+                    }
+                    // Username field
+                    Group {
+                        Text("Username")
+                            .font(.title3)
+                            .foregroundColor(.black)
+                        TextField("Username", text: $username)
+                            .autocapitalization(.none)
+                            .disableAutocorrection(true)
+                            .padding(.bottom, 8)
+                            .overlay(
+                                Rectangle().frame(height: 1).foregroundColor(.black),
+                                alignment: .bottom
+                            )
+                    }
+
+                    // Password field
+                    Group {
+                        Text("Password")
+                            .font(.title3)
+                            .foregroundColor(.black)
+                        SecureField("•••••••••••••••", text: $password)
+                            .padding(.bottom, 8)
+                            .overlay(
+                                Rectangle().frame(height: 1).foregroundColor(.black),
+                                alignment: .bottom
+                            )
+                    }
+
+                    // Confirm Password field
+                    Group {
+                        Text("Confirm Password")
+                            .font(.title3)
+                            .foregroundColor(.black)
+                        SecureField("•••••••••••••••", text: $confirmPassword)
+                            .padding(.bottom, 8)
+                            .overlay(
+                                Rectangle().frame(height: 1).foregroundColor(.black),
+                                alignment: .bottom
+                            )
+                    }
+
+                    if !errorMessage.isEmpty {
+                        Text(errorMessage)
+                            .font(.footnote)
+                            .foregroundColor(.red)
+                            .padding(.top, 4)
+                    }
+                }
+                .padding(.horizontal, 32)
+                .padding(.top, 8)
+
+                // Register Button
+                Button(action: registerUser) {
+                    Text("Sign Up")
+                        .font(.headline)
+                        .foregroundColor(.white)
+                        .frame(maxWidth: .infinity)
+                        .padding()
+                        .background(Color.black)
+                        .cornerRadius(28)
+                }
+                .padding(.horizontal, 32)
+                .padding(.top, 16)
+
+                // Already have account?
+                HStack {
+                    Spacer()
+                    Text("Already have an account?")
+                        .font(.footnote)
+                        .foregroundColor(.gray)
+                    Button(action: { showLoginView = true }) {
+                        Text("Log In")
+                            .font(.body)
+                            .underline()
+                            .foregroundColor(.black)
+                    }
+                }
+                .padding(.horizontal, 32)
+                .padding(.vertical, 24)
+
+                // NavigationLink to Login
+                NavigationLink(isActive: $showLoginView) {
+                    LoginScreen(isLoggedIn: .constant(false))
+                } label: {
+                    EmptyView()
+                }
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+            .alert("Sign Up Successful", isPresented: $showSuccessAlert) {
+                Button("OK") {
+                    showLoginView = true
+                }
+            } message: {
+                Text("Your account has been created. Please log in.")
+            }
+        }
+        .navigationBarBackButtonHidden(true)
+    }
+
+    // MARK: - Validation & Registration Logic
+
+    private func registerUser() {
+        errorMessage = ""
+        // Basic non-empty checks
+        guard !email.isEmpty, !username.isEmpty, !password.isEmpty, !confirmPassword.isEmpty else {
+            errorMessage = "Please fill in all fields."
+            return
+        }
+        // Email format
+        if !isValidEmail(email) {
+            errorMessage = "Please enter a valid email."
+            return
+        }
+        // Username rules
+        if !isValidUsername(username) {
+            errorMessage = "Invalid username. Use 6+ letters, numbers, '.', '_'"
+            return
+        }
+        // Password strength
+        if !isValidPassword(password) {
+            errorMessage = "Password must be 12+ chars with upper, lower, number & special"
+            return
+        }
+        // Confirm match
+        guard password == confirmPassword else {
+            errorMessage = "Passwords don't match."
+            return
+        }
+
+        // Check Firestore for username
+        let db = Firestore.firestore()
+        db.collection("users").whereField("username", isEqualTo: username)
+            .getDocuments { snapshot, error in
+                if let error = error {
+                    errorMessage = "Error checking username: \(error.localizedDescription)"
+                    return
+                }
+                if snapshot?.documents.count ?? 0 > 0 {
+                    errorMessage = "Username is already taken."
+                    return
+                }
+                // Create Firebase user
+                Auth.auth().createUser(withEmail: email, password: password) { result, error in
+                    if let error = error {
+                        errorMessage = error.localizedDescription
+                    } else {
+                        // Success: show alert
+                        showSuccessAlert = true
+                    }
+                }
+            }
+    }
+
+    private func isValidEmail(_ email: String) -> Bool {
+        let pattern = "[A-Z0-9a-z._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}"
         return NSPredicate(format: "SELF MATCHES %@", pattern).evaluate(with: email)
     }
 
-   // Checks if username is valid
-   func isValidUsername(_ username: String) -> Bool {
+    private func isValidUsername(_ username: String) -> Bool {
         let pattern = "^[a-zA-Z0-9._]{6,}$"
         return NSPredicate(format: "SELF MATCHES %@", pattern).evaluate(with: username)
     }
 
-    // Checks if username exists within Firestore
-    func checkUsernameExists(_ username: String, completion: @escaping (Bool) -> Void) {
-        let db = Firestore.firestore()
-        db.collection("users").whereField("username", isEqualTo: username).getDocuments { snapshot, error in
-            if let error = error {
-                print("Error checking username: \(error)")
-                completion(true) // assume taken if there's an error
-            } else {
-                completion(snapshot?.documents.count ?? 0 > 0)
-            }      
-        }
-    }
-
-    // Check if password is valid
-    func isValidPassword(_ password: String) -> Bool {
+    private func isValidPassword(_ password: String) -> Bool {
         let pattern = "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[^a-zA-Z\\d]).{12,}$"
         return NSPredicate(format: "SELF MATCHES %@", pattern).evaluate(with: password)
     }
+}
 
-   
-   // Creates a new user account with Firebase authentication
-   private func registerUser() {
-        if email.isEmpty || username.isEmpty || password.isEmpty || confirmPassword.isEmpty {
-            errorMessage = "Please fill in all fields"
-            return
-        }
-
-        if !email.isValidEmail {
-            errorMessage = "Please enter a valid email"
-            return
-        }
-
-        if !isValidUsername(username) {
-            errorMessage = "Invalid username. Use only letters, numbers, '.', '_' (6+ characters)"
-            return
-        }
-
-        if !isValidPassword(password) {
-            errorMessage = "Password must be 12+ chars with upper, lower, number, and special character"
-            return
-        }
-
-        if password != confirmPassword {
-            errorMessage = "Passwords don't match"
-            return
-        }
-
-        // Check if username is taken
-        checkUsernameExists(username) { exists in
-            if exists {
-                errorMessage = "Username is already taken"
-                return
-            }
-
-            Auth.auth().createUser(withEmail: email, password: password) { result, error in
-                if let error = error {
-                    errorMessage = "Error: \(error.localizedDescription)"
-                } else if let user = result?.user {
-                    let db = Firestore.firestore()
-                    db.collection("users").document(user.uid).setData([
-                        "email": user.email ?? "",
-                        "uid": user.uid,
-                        "username": username,
-                        "createdAt": Timestamp()
-                    ]) { err in
-                        if let err = err {
-                            errorMessage = "Error saving user data: \(err.localizedDescription)"
-                        } else {
-                            DispatchQueue.main.async {
-                                showLoginView = true
-                            }
-                        }
-                    }
-                }
-            }
-        }
+struct SignUpView_Previews: PreviewProvider {
+    static var previews: some View {
+        NavigationView { SignUpView() }
+            .previewDevice("iPhone 14")
     }
 }
