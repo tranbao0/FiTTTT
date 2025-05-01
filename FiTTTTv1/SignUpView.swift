@@ -73,15 +73,23 @@ struct SignUpView: View {
        .padding()
    }
 
+    // Checks if email is in valid format
+    func isValidEmail(_ email: String) -> Bool {
+        let pattern = "^[A-Z0-9a-z._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$"
+        return NSPredicate(format: "SELF MATCHES %@", pattern).evaluate(with: email)
+    }
+
+
+
    // Checks if username is valid
    func isValidUsername(_ username: String) -> Bool {
         let pattern = "^[a-zA-Z0-9._]{6,}$"
         return NSPredicate(format: "SELF MATCHES %@", pattern).evaluate(with: username)
     }
 
-    // Checks if username exists within firestore
+    // Checks if username exists within Firestore
     func checkUsernameExists(_ username: String, completion: @escaping (Bool) -> Void) {
-     l  et db = Firestore.firestore()
+        let db = Firestore.firestore()
         db.collection("users").whereField("username", isEqualTo: username).getDocuments { snapshot, error in
             if let error = error {
                 print("Error checking username: \(error)")
@@ -90,6 +98,12 @@ struct SignUpView: View {
                 completion(snapshot?.documents.count ?? 0 > 0)
             }      
         }
+    }
+
+    // Check if password is valid
+    func isValidPassword(_ password: String) -> Bool {
+        let pattern = "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[^a-zA-Z\\d]).{12,}$"
+        return NSPredicate(format: "SELF MATCHES %@", pattern).evaluate(with: password)
     }
 
    
