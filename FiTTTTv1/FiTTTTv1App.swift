@@ -20,15 +20,15 @@ class AppDelegate: NSObject, UIApplicationDelegate {
 
 @main
 struct FiTTTTv1App: App {
-
     // firebase set up delegate
     @UIApplicationDelegateAdaptor(AppDelegate.self) var delegate
 
     var body: some Scene {
         WindowGroup {
             NavigationView {
-                SignUpView()
+                OnboardingView()
             }
+            .navigationViewStyle(StackNavigationViewStyle())
         }
     }
 }
