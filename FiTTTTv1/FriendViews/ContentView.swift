@@ -1,6 +1,6 @@
 import SwiftUI
 
-struct ContentView: View {
+struct FriendsView: View {
     let topFriends: [Friend] = [
         Friend(rank: 1, name: "John", points: 6210, imageName: "John"),
         Friend(rank: 2, name: "Sophia", points: 3685, imageName: "sophia"),
