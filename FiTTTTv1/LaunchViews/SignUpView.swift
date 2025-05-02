@@ -164,7 +164,7 @@ struct SignUpView: View {
 
                 // NavigationLink to Login
                 NavigationLink(isActive: $showLoginView) {
-                    LoginScreen(isLoggedIn: .constant(false))
+                    LoginScreen()
                 } label: {
                     EmptyView()
                 }
@@ -219,17 +219,36 @@ struct SignUpView: View {
                     errorMessage = "Error checking username: \(error.localizedDescription)"
                     return
                 }
+                
                 if snapshot?.documents.count ?? 0 > 0 {
                     errorMessage = "Username is already taken."
                     return
                 }
-                // Create Firebase user
+                
+                // Create Firebase Auth user
                 Auth.auth().createUser(withEmail: email, password: password) { result, error in
                     if let error = error {
                         errorMessage = error.localizedDescription
-                    } else {
-                        // Success: show alert
-                        showSuccessAlert = true
+                        return
+                    }
+                    
+                    guard let user = result?.user else {
+                        errorMessage = "Failed to get user info."
+                        return
+                    }
+                    
+                    // Write user to Firestore
+                    db.collection("users").document(user.uid).setData([
+                        "uid": user.uid,
+                        "email": user.email ?? "",
+                        "username": username,
+                        "createdAt": Timestamp()
+                    ]) { err in
+                        if let err = err {
+                            errorMessage = "Error saving user data: \(err.localizedDescription)"
+                        } else {
+                            showSuccessAlert = true
+                        }
                     }
                 }
             }

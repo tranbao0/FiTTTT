@@ -104,7 +104,7 @@ struct OnboardingView: View {
                 .padding(.top, 24)
 
                 // Log In ⇒ LoginScreen with binding
-                NavigationLink(destination: LoginScreen(isLoggedIn: $isLoggedIn)) {
+                NavigationLink(destination: LoginScreen()) {
                     Text("Log In")
                         .font(.body)
                         .underline()

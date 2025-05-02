@@ -23,12 +23,18 @@ struct FiTTTTv1App: App {
 
     // firebase set up delegate
     @UIApplicationDelegateAdaptor(AppDelegate.self) var delegate
-
+    @AppStorage("isLoggedIn") var isLoggedIn = false
+    
     var body: some Scene {
         WindowGroup {
             NavigationView {
-                OnboardingView()
+                if isLoggedIn {
+                    ContentView()
+                } else {
+                    OnboardingView()
+                }
             }
         }
     }
+    
 }

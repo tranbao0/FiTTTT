@@ -20,7 +20,7 @@ struct BottomCurveShape: Shape {
 }
 
 struct LoginScreen: View {
-    @Binding var isLoggedIn: Bool
+    @AppStorage("isLoggedIn") var isLoggedIn = false
 
     @State private var email: String = ""
     @State private var password: String = ""
@@ -121,7 +121,7 @@ struct LoginScreen: View {
                         }
                     }
                     .padding(.horizontal, 32)
-                    .padding(.vertical, 24)
+                    .padding(.vertical, 26)
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
             }
@@ -165,6 +165,6 @@ extension String {
 
 struct LoginScreen_Previews: PreviewProvider {
     static var previews: some View {
-        LoginScreen(isLoggedIn: .constant(false))
+        LoginScreen()
     }
 }

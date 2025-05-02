@@ -1,6 +1,7 @@
 import SwiftUI
 import WebKit
 
+// MARK: - YouTube Embed View
 struct YouTubeView: UIViewRepresentable {
     let videoID: String
 
@@ -20,51 +21,56 @@ struct YouTubeView: UIViewRepresentable {
     }
 }
 
+// MARK: - Placeholder Course Detail View
+struct CourseDetailView: View {
+    let title: String
+    var body: some View {
+        Text(title)
+            .font(.largeTitle)
+            .padding()
+    }
+}
+
+// MARK: - Main Content View
 struct ContentView: View {
     var body: some View {
         NavigationStack {
             VStack(spacing: 0) {
-                // Top Header
+                // Header
                 HStack {
                     Image(systemName: "line.horizontal.3")
                     Spacer()
-                    
-                    VStack(alignment: .center, spacing: 4) {
+                    VStack(spacing: 4) {
                         Image("FiTTTTLogoBlacked")
                             .resizable()
                             .aspectRatio(contentMode: .fit)
                             .frame(width: 140, height: 40)
-                        
                         Text("Accountability in Fitness")
                             .font(.subheadline)
                             .foregroundColor(.black)
                     }
-                    
                     Spacer()
                     Image(systemName: "person.crop.circle")
                 }
-                .padding(.horizontal)
-                .padding(.top)
-
                 .padding()
                 .background(Color.white)
-                .overlay(Rectangle().frame(height: 3).foregroundColor(.black), alignment: .bottom)
-                // 🌟 Middle content
+                .overlay(Rectangle().frame(height: 1).foregroundColor(.black), alignment: .bottom)
+
+                // Middle ScrollView
                 ScrollView {
                     VStack(spacing: 20) {
-                        // Build Routine
+                        // Build Routine Section
                         VStack(spacing: 8) {
                             Text("Build Routine")
                                 .font(.title2)
                                 .bold()
-                            Text("Pick your activities and set your schedule")
+                            Text("Make a goal and build your routine")
                                 .font(.subheadline)
                                 .foregroundColor(.gray)
-                            
                             Button(action: {
-                                // action here
+                                // TODO: Build plan action
                             }) {
-                                Text("Log Workout")
+                                Text("Make Goal")
                                     .fontWeight(.bold)
                                     .frame(maxWidth: .infinity)
                                     .frame(height: 50)
@@ -76,7 +82,7 @@ struct ContentView: View {
                         }
                         .padding()
                         .background(Color.white)
-                        .overlay(Rectangle().frame(height: 3).foregroundColor(.black), alignment: .bottom)
+                        .overlay(Rectangle().frame(height: 1).foregroundColor(.black), alignment: .bottom)
 
                         // Top Picks Header
                         Text("Top Picks to Get Started")
@@ -84,14 +90,14 @@ struct ContentView: View {
                             .frame(maxWidth: .infinity, alignment: .leading)
                             .padding(.horizontal)
 
-                        // Example horizontal scroll
+                        // Swipeable Video Scroll
                         ScrollView(.horizontal, showsIndicators: false) {
                             HStack(spacing: 16) {
+                                // First video
                                 VStack(alignment: .leading) {
                                     YouTubeView(videoID: "j91YBwNnY0w")
-                                        .frame(width: 180, height: 120)
+                                        .frame(width: 300, height: 180)
                                         .cornerRadius(10)
-
                                     Text("Mindful Cooldown")
                                         .font(.subheadline)
                                         .bold()
@@ -99,25 +105,151 @@ struct ContentView: View {
                                         .font(.caption)
                                         .foregroundColor(.gray)
                                 }
-                                .frame(width: 180)
+                                .frame(width: 300)
+
+                                // Second video
+                                VStack(alignment: .leading) {
+                                    YouTubeView(videoID: "M0uO8X3_tEA")
+                                        .frame(width: 300, height: 180)
+                                        .cornerRadius(10)
+                                    Text("Hitt Workout")
+                                        .font(.subheadline)
+                                        .bold()
+                                    Text("20min • Intense")
+                                        .font(.caption)
+                                        .foregroundColor(.gray)
+                                }
+                                .frame(width: 300)
+
+                                // Third video
+                                VStack(alignment: .leading) {
+                                    YouTubeView(videoID: "eMjyvIQbn9M")
+                                        .frame(width: 300, height: 180)
+                                        .cornerRadius(10)
+                                    Text("Science Lift")
+                                        .font(.subheadline)
+                                        .bold()
+                                    Text("17min • Chill Vibes")
+                                        .font(.caption)
+                                        .foregroundColor(.gray)
+                                }
+                                .frame(width: 300)
+
+                                // Fourth video
+                                VStack(alignment: .leading) {
+                                    YouTubeView(videoID: "jWhjDcp5fTY")
+                                        .frame(width: 300, height: 180)
+                                        .cornerRadius(10)
+                                    Text("CBum Workout")
+                                        .font(.subheadline)
+                                        .bold()
+                                    Text("17min • Intense")
+                                        .font(.caption)
+                                        .foregroundColor(.gray)
+                                }
+                                .frame(width: 300)
                             }
                             .padding(.horizontal)
                         }
+
+                        // Trending Courses Section
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("Trending Courses")
+                                .font(.headline)
+                                .padding(.horizontal)
+                            ScrollView(.horizontal, showsIndicators: false) {
+                                HStack(spacing: 16) {
+                                    // Personal Trainer Course
+                                    NavigationLink(destination: CourseDetailView(title: "Power Lifting")) {
+                                        VStack(alignment: .leading) {
+                                            Image("PowerLifting")
+                                                .resizable()
+                                                .scaledToFill()
+                                                .frame(width: 180, height: 100)
+                                                .clipped()
+                                                .cornerRadius(10)
+                                            Text("Fitness")
+                                                .font(.caption)
+                                                .foregroundColor(.gray)
+                                            Text("Power Lifting")
+                                                .font(.subheadline)
+                                                .bold()
+                                        }
+                                        .frame(width: 180)
+                                    }
+
+                                    // Sport Nutrition Course
+                                    NavigationLink(destination: CourseDetailView(title: "Pilates")) {
+                                        VStack(alignment: .leading) {
+                                            Image("Pilates")
+                                                .resizable()
+                                                .scaledToFill()
+                                                .frame(width: 180, height: 100)
+                                                .clipped()
+                                                .cornerRadius(10)
+                                            Text("Fitness")
+                                                .font(.caption)
+                                                .foregroundColor(.gray)
+                                            Text("Pilates")
+                                                .font(.subheadline)
+                                                .bold()
+                                        }
+                                        .frame(width: 180)
+                                    }
+                                    
+                                    NavigationLink(destination: CourseDetailView(title: "Calisthenics")) {
+                                        VStack(alignment: .leading) {
+                                            Image("Calisthenics")
+                                                .resizable()
+                                                .scaledToFill()
+                                                .frame(width: 180, height: 100)
+                                                .clipped()
+                                                .cornerRadius(10)
+                                            Text("Fitness")
+                                                .font(.caption)
+                                                .foregroundColor(.gray)
+                                            Text("Calisthenics")
+                                                .font(.subheadline)
+                                                .bold()
+                                        }
+                                        .frame(width: 180)
+                                    }
+                                    NavigationLink(destination: CourseDetailView(title: "Running")) {
+                                        VStack(alignment: .leading) {
+                                            Image("Running")
+                                                .resizable()
+                                                .scaledToFill()
+                                                .frame(width: 180, height: 100)
+                                                .clipped()
+                                                .cornerRadius(10)
+                                            Text("Fitness")
+                                                .font(.caption)
+                                                .foregroundColor(.gray)
+                                            Text("Running")
+                                                .font(.subheadline)
+                                                .bold()
+                                        }
+                                        .frame(width: 180)
+                                    }
+                                }
+                                .padding(.horizontal)
+                            }
+                        }
                     }
-                 .padding(.top, 10)
+                    .padding(.top, 10)
                 }
 
                 // Bottom Tab Bar
                 HStack {
                     Spacer()
-                    Image(systemName: "house")
-                    Spacer()
-                    Image(systemName: "dumbbell")
-                    Spacer()
-                    Image(systemName: "person.2")
-                    Spacer()
-                    Image(systemName: "figure.bench.press")
-                    Spacer()
+                        Image(systemName: "house")
+                        Spacer()
+                        Image(systemName: "dumbbell")
+                        Spacer()
+                        Image(systemName: "person.2")
+                        Spacer()
+                        Image(systemName: "calendar")
+                        Spacer()
                 }
                 .padding()
                 .background(Color.black)
@@ -129,6 +261,7 @@ struct ContentView: View {
     }
 }
 
+// MARK: - Preview
 struct ContentView_Previews: PreviewProvider {
     static var previews: some View {
         ContentView()
