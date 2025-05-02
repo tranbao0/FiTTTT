@@ -126,9 +126,6 @@ struct LoginScreen: View {
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
             }
             .navigationBarBackButtonHidden(true)
-            .navigationDestination(isPresented: $isLoggedIn) {
-                CalendarView()
-            }
         }
     }
 

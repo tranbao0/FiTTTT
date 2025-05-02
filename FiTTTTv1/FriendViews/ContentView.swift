@@ -100,20 +100,33 @@ struct FriendsView: View {
                 // Bottom Tab Bar
                 HStack {
                     Spacer()
-                    Image(systemName: "house")
+                    NavigationLink(destination: ContentView()) {
+                        Image(systemName: "house")
+                            .font(.system(size: 24))
+                    }
                     Spacer()
-                    Image(systemName: "dumbbell")
+                    NavigationLink(destination: LogWorkoutView()) {
+                        Image(systemName: "dumbbell")
+                            .font(.system(size: 24))
+                    }
                     Spacer()
                     Image(systemName: "person.2")
+                        .font(.system(size: 32))
                     Spacer()
-                    Image(systemName: "figure.bench.press")
+                    NavigationLink(destination: CalendarView()) {
+                        Image(systemName: "calendar")
+                            .font(.system(size: 24))
+                    }
                     Spacer()
                 }
                 .padding()
                 .background(Color.black)
                 .foregroundColor(.white)
             }
+            .background(Color.white)
             .edgesIgnoringSafeArea(.bottom)
+            
+            .navigationBarBackButtonHidden(true)
         }
     }
 }

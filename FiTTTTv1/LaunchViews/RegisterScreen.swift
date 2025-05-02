@@ -2,11 +2,13 @@ import SwiftUI
 
 struct OnboardingView: View {
     // Track login state to pass into LoginScreen
-    @State private var isLoggedIn = false
+    @AppStorage("isLoggedIn") var isLoggedIn = false
+    @State private var showLogin = false
     // Your image asset names
     private let images = ["image1", "image2", "image3", "image4"]
     @State private var currentIndex = 0
     @GestureState private var dragOffset: CGFloat = 0
+
 
     var body: some View {
         ZStack {
@@ -104,13 +106,19 @@ struct OnboardingView: View {
                 .padding(.top, 24)
 
                 // Log In ⇒ LoginScreen with binding
-                NavigationLink(destination: LoginScreen()) {
-                    Text("Log In")
-                        .font(.body)
-                        .underline()
-                        .foregroundColor(.black)
+                VStack {
+                    Button("Log In") {
+                        showLogin = true
+                    }
+                    .foregroundColor(.black)
+                    .underline()
+
+                    NavigationLink(destination: LoginScreen(), isActive: $showLogin) {
+                        EmptyView()
+                    }
                 }
                 .padding(.bottom, 40)
+
             }
         }
     }

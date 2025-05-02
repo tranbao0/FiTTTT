@@ -50,7 +50,12 @@ struct ContentView: View {
                             .foregroundColor(.black)
                     }
                     Spacer()
-                    Image(systemName: "person.crop.circle")
+                    NavigationLink(destination: ProfileView()) {
+                        Image(systemName: "person.crop.circle")
+                            .resizable()
+                            .frame(width: 30, height: 30)
+                            .foregroundColor(.black)
+                    }
                 }
                 .padding()
                 .background(Color.white)
@@ -61,16 +66,14 @@ struct ContentView: View {
                     VStack(spacing: 20) {
                         // Build Routine Section
                         VStack(spacing: 8) {
-                            Text("Build Routine")
+                            Text("Personalize Your Plans")
                                 .font(.title2)
                                 .bold()
                             Text("Make a goal and build your routine")
                                 .font(.subheadline)
                                 .foregroundColor(.gray)
-                            Button(action: {
-                                // TODO: Build plan action
-                            }) {
-                                Text("Make Goal")
+                            NavigationLink(destination: LogWorkoutView()) {
+                                Text("Build Routine")
                                     .fontWeight(.bold)
                                     .frame(maxWidth: .infinity)
                                     .frame(height: 50)
@@ -242,21 +245,33 @@ struct ContentView: View {
                 // Bottom Tab Bar
                 HStack {
                     Spacer()
-                        Image(systemName: "house")
-                        Spacer()
-                        Image(systemName: "dumbbell")
-                        Spacer()
-                        Image(systemName: "person.2")
-                        Spacer()
-                        Image(systemName: "calendar")
-                        Spacer()
-                }
+                    Image(systemName: "house")
+                        .font(.system(size: 32))
+                    Spacer()
+                        NavigationLink(destination: LogWorkoutView()) {
+                            Image(systemName: "dumbbell")
+                                .font(.system(size: 24))
+                        }
+                    Spacer()
+                        NavigationLink(destination: FriendsView()) {
+                            Image(systemName: "person.2")
+                                .font(.system(size: 24))
+                        }
+                    Spacer()
+                        NavigationLink(destination: CalendarView()) {
+                            Image(systemName: "calendar")
+                                .font(.system(size: 24))
+                        }
+                    Spacer()
+                    }
                 .padding()
                 .background(Color.black)
                 .foregroundColor(.white)
             }
             .edgesIgnoringSafeArea(.bottom)
             .background(Color.white)
+            
+            .navigationBarBackButtonHidden(true)
         }
     }
 }
