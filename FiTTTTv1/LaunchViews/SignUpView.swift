@@ -211,47 +211,53 @@ struct SignUpView: View {
             return
         }
 
-        // Check Firestore for username
         let db = Firestore.firestore()
-        db.collection("users").whereField("username", isEqualTo: username)
-            .getDocuments { snapshot, error in
+        // Check Firestore for username in 'usernames' collection
+        db.collection("usernames").document(username).getDocument { document, error in
+            if let error = error {
+                errorMessage = "Error checking username: \(error.localizedDescription)"
+                return
+            }
+            if document?.exists == true {
+                errorMessage = "Username is already taken."
+                return
+            }
+
+            // Create Firebase Auth user
+            Auth.auth().createUser(withEmail: email, password: password) { result, error in
                 if let error = error {
-                    errorMessage = "Error checking username: \(error.localizedDescription)"
+                    errorMessage = error.localizedDescription
                     return
                 }
-                
-                if snapshot?.documents.count ?? 0 > 0 {
-                    errorMessage = "Username is already taken."
+                guard let user = result?.user else {
+                    errorMessage = "Failed to get user info."
                     return
                 }
-                
-                // Create Firebase Auth user
-                Auth.auth().createUser(withEmail: email, password: password) { result, error in
-                    if let error = error {
-                        errorMessage = error.localizedDescription
+
+                // Write user profile to Firestore
+                db.collection("users").document(user.uid).setData([
+                    "uid": user.uid,
+                    "email": user.email ?? "",
+                    "username": username,
+                    "createdAt": Timestamp()
+                ]) { err in
+                    if let err = err {
+                        errorMessage = "Error saving user data: \(err.localizedDescription)"
                         return
                     }
-                    
-                    guard let user = result?.user else {
-                        errorMessage = "Failed to get user info."
-                        return
-                    }
-                    
-                    // Write user to Firestore
-                    db.collection("users").document(user.uid).setData([
-                        "uid": user.uid,
-                        "email": user.email ?? "",
-                        "username": username,
-                        "createdAt": Timestamp()
+
+                    // Claim username in its own collection for fast lookup
+                    db.collection("usernames").document(username).setData([
+                        "uid": user.uid
                     ]) { err in
                         if let err = err {
-                            errorMessage = "Error saving user data: \(err.localizedDescription)"
-                        } else {
-                            showSuccessAlert = true
+                            print("Warning: could not save username mapping: \(err.localizedDescription)")
                         }
+                        showSuccessAlert = true
                     }
                 }
             }
+        }
     }
 
     private func isValidEmail(_ email: String) -> Bool {

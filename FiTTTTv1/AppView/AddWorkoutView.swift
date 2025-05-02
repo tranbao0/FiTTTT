@@ -58,7 +58,7 @@ struct LogWorkoutView: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 24) {
                     // Header
-                    Text("Build Your Workout")
+                    Text("Build Your Workout Session")
                         .font(.system(size: 28, weight: .bold))
                         .padding(.horizontal)
                     
@@ -132,7 +132,7 @@ struct LogWorkoutView: View {
             VStack(spacing: 16) {
                 // Workout name
                 inputField(
-                    title: "Workout Name",
+                    title: "Workout Session Name",
                     placeholder: "e.g. Morning Power Routine",
                     binding: $workoutName
                 )

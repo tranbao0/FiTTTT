@@ -1,5 +1,35 @@
 import SwiftUI
 import WebKit
+import FirebaseAuth
+import FirebaseFirestore
+
+struct ConfettiView: View {
+    @State private var isActive = false
+    let colors: [Color] = [.red, .blue, .green, .yellow, .orange, .purple]
+    
+    var body: some View {
+        ZStack {
+            ForEach(0..<100, id: \.self) { i in
+                Circle()
+                    .fill(colors[i % colors.count])
+                    .frame(width: CGFloat.random(in: 5...10))
+                    .position(
+                        x: isActive ? CGFloat.random(in: 0...UIScreen.main.bounds.width) : UIScreen.main.bounds.width/2,
+                        y: isActive ? CGFloat.random(in: UIScreen.main.bounds.height/2...UIScreen.main.bounds.height) : UIScreen.main.bounds.height/2
+                    )
+                    .opacity(isActive ? 0 : 1)
+                    .animation(
+                        Animation.easeOut(duration: 1.5)
+                            .delay(Double.random(in: 0...0.5)),
+                        value: isActive
+                    )
+            }
+        }
+        .onAppear {
+            isActive = true
+        }
+    }
+}
 
 // MARK: - YouTube Embed View
 struct YouTubeView: UIViewRepresentable {
@@ -31,12 +61,107 @@ struct CourseDetailView: View {
     }
 }
 
-// MARK: - Main Content View
 struct ContentView: View {
+    @State private var hasCheckedInToday: Bool = false
+    @State private var streak: Int = 0
+    @State private var showConfetti = false
+    @State private var showStreak = false
+    
+    // Check if user has already checked in today
+    private func checkIfUserCheckedInToday() {
+        guard let userId = Auth.auth().currentUser?.uid else { return }
+        
+        let db = Firestore.firestore()
+        db.collection("users").document(userId).getDocument { snapshot, error in
+            if let error = error {
+                print("Error getting document: \(error)")
+                return
+            }
+            
+            if let data = snapshot?.data() {
+                if let lastCheckIn = data["lastCheckIn"] as? Timestamp {
+                    // Check if last check-in was today
+                    let calendar = Calendar.current
+                    hasCheckedInToday = calendar.isDateInToday(lastCheckIn.dateValue())
+                }
+                
+                // Get current streak
+                streak = data["streak"] as? Int ?? 0
+            }
+        }
+    }
+    
+    // Update user's streak in Firestore
+    private func updateStreak() {
+        guard let userId = Auth.auth().currentUser?.uid else { return }
+        
+        let db = Firestore.firestore()
+        let userRef = db.collection("users").document(userId)
+        
+        // Using a transaction to safely update the streak
+        db.runTransaction({ (transaction, errorPointer) -> Any? in
+            let document: DocumentSnapshot
+            do {
+                try document = transaction.getDocument(userRef)
+            } catch let fetchError as NSError {
+                errorPointer?.pointee = fetchError
+                return nil
+            }
+            
+            // Get current streak and last check-in date
+            let currentStreak = document.data()?["streak"] as? Int ?? 0
+            let lastCheckIn = document.data()?["lastCheckIn"] as? Timestamp
+            
+            let now = Date()
+            let calendar = Calendar.current
+            var newStreak = currentStreak
+            
+            if let lastDate = lastCheckIn?.dateValue() {
+                // If last check-in was yesterday, increment streak
+                if calendar.isDate(lastDate, inSameDayAs: calendar.date(byAdding: .day, value: -1, to: now)!) {
+                    newStreak += 1
+                }
+                // If last check-in was today, maintain streak (shouldn't happen due to UI check)
+                else if calendar.isDateInToday(lastDate) {
+                    // Do nothing
+                }
+                // If last check-in was more than a day ago, reset streak to 1
+                else {
+                    newStreak = 1
+                }
+            } else {
+                // First check-in ever
+                newStreak = 1
+            }
+            
+            transaction.updateData([
+                "streak": newStreak,
+                "lastCheckIn": Timestamp(date: now)
+            ], forDocument: userRef)
+            
+            streak = newStreak
+            return nil
+        }) { _, error in
+            if let error = error {
+                print("Transaction failed: \(error)")
+            } else {
+                // Show success feedback
+                hasCheckedInToday = true
+                showConfetti = true
+                showStreak = true
+                
+                // Hide streak message after 5 seconds
+                DispatchQueue.main.asyncAfter(deadline: .now() + 5) {
+                    showStreak = false
+                }
+            }
+        }
+    }
+    
     var body: some View {
         NavigationStack {
             VStack(spacing: 0) {
-                // Header
+                // Header (keeping your existing header code)
                 HStack {
                     Image(systemName: "line.horizontal.3")
                     Spacer()
@@ -82,17 +207,45 @@ struct ContentView: View {
                                     .cornerRadius(25)
                                     .padding(.horizontal)
                             }
+                            
+                            // New Check-in Button
+                            if !hasCheckedInToday {
+                                Button(action: {
+                                    updateStreak()
+                                }) {
+                                    Text("Check In Today")
+                                        .fontWeight(.bold)
+                                        .frame(maxWidth: .infinity)
+                                        .frame(height: 50)
+                                        .background(Color.green)
+                                        .foregroundColor(.white)
+                                        .cornerRadius(25)
+                                        .padding(.horizontal)
+                                }
+                                .padding(.top, 8)
+                            }
+                            
+                            // Streak Message
+                            if showStreak {
+                                Text("🔥 Day \(streak) of your streak! Keep it up!")
+                                    .font(.headline)
+                                    .foregroundColor(.orange)
+                                    .padding(.top, 8)
+                                    .transition(.opacity)
+                            }
                         }
                         .padding()
                         .background(Color.white)
                         .overlay(Rectangle().frame(height: 1).foregroundColor(.black), alignment: .bottom)
-
+                        
+                        // Rest of your existing content
                         // Top Picks Header
                         Text("Top Picks to Get Started")
                             .font(.headline)
                             .frame(maxWidth: .infinity, alignment: .leading)
                             .padding(.horizontal)
 
+                        // Keep all your existing code for video scrolling and trending courses
                         // Swipeable Video Scroll
                         ScrollView(.horizontal, showsIndicators: false) {
                             HStack(spacing: 16) {
@@ -241,6 +394,17 @@ struct ContentView: View {
                     }
                     .padding(.top, 10)
                 }
+                .overlay {
+                    if showConfetti {
+                        ConfettiView()
+                            .onAppear {
+                                // Remove confetti after animation completes
+                                DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+                                    showConfetti = false
+                                }
+                            }
+                    }
+                }
 
                 // Bottom Tab Bar
                 HStack {
@@ -270,15 +434,10 @@ struct ContentView: View {
             }
             .edgesIgnoringSafeArea(.bottom)
             .background(Color.white)
-            
             .navigationBarBackButtonHidden(true)
+            .onAppear {
+                checkIfUserCheckedInToday()
+            }
         }
-    }
-}
-
-// MARK: - Preview
-struct ContentView_Previews: PreviewProvider {
-    static var previews: some View {
-        ContentView()
     }
 }
