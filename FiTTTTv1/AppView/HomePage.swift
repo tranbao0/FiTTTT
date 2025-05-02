@@ -38,8 +38,20 @@ struct ContentView: View {
             VStack(spacing: 0) {
                 // Header
                 HStack {
-                    Image(systemName: "line.horizontal.3")
-                    Spacer()
+                        Image(systemName: "line.horizontal.3")
+                            .font(.system(size: 24))
+                            .foregroundColor(.black)
+
+                        Spacer()
+
+                        NavigationLink(destination: LogWorkoutView()) {
+                            Image(systemName: "person.crop.circle")
+                                .font(.system(size: 24))
+                                .foregroundColor(.black)
+                        }
+                    }
+
+                    // 2) Center logo + title
                     VStack(spacing: 4) {
                         Image("FiTTTTLogoBlacked")
                             .resizable()
@@ -49,8 +61,6 @@ struct ContentView: View {
                             .font(.subheadline)
                             .foregroundColor(.black)
                     }
-                    Spacer()
-                    Image(systemName: "person.crop.circle")
                 }
                 .padding()
                 .background(Color.white)
@@ -101,7 +111,7 @@ struct ContentView: View {
                                     Text("Mindful Cooldown")
                                         .font(.subheadline)
                                         .bold()
-                                    Text("5min • Chill Vibes")
+                                    Text("20min • Moderate")
                                         .font(.caption)
                                         .foregroundColor(.gray)
                                 }
@@ -242,24 +252,37 @@ struct ContentView: View {
                 // Bottom Tab Bar
                 HStack {
                     Spacer()
-                        Image(systemName: "house")
-                        Spacer()
-                        Image(systemName: "dumbbell")
-                        Spacer()
-                        Image(systemName: "person.2")
-                        Spacer()
-                        Image(systemName: "calendar")
-                        Spacer()
-                }
-                .padding()
+                        NavigationLink(destination: ContentView()) {
+                            Image(systemName: "house")
+                                .font(.system(size: 24))
+                        }
+                    Spacer()
+                        NavigationLink(destination: LogWorkoutView()) {
+                            Image(systemName: "dumbbell")
+                                .font(.system(size: 24))
+                        }
+                    Spacer()
+                        NavigationLink(destination: FriendsView()) {
+                            Image(systemName: "person.2")
+                                .font(.system(size: 24))
+                        }
+                    Spacer()
+                        NavigationLink(destination: CalendarView()) {
+                            Image(systemName: "calendar")
+                                .font(.system(size: 24))
+                        }
+                    Spacer()
+                    }
+                .padding(.vertical, 12)
                 .background(Color.black)
                 .foregroundColor(.white)
+                
             }
             .edgesIgnoringSafeArea(.bottom)
             .background(Color.white)
         }
     }
-}
+
 
 // MARK: - Preview
 struct ContentView_Previews: PreviewProvider {
