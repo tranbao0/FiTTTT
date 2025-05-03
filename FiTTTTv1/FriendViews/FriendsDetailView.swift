@@ -21,17 +21,9 @@ struct FriendDetailView: View {
                     .font(.largeTitle)
                     .bold()
                 
-                Text("Points: \(friend.points)")
+                Text("Streak: \(friend.streak) days")
                     .font(.title2)
                     .foregroundColor(.gray)
-                
-                // Activity Rings
-                ZStack {
-                    RingView(progress: standProgress, ringColor: .blue, size: 150, lineWidth: 10)
-                    RingView(progress: exerciseProgress, ringColor: .green, size: 120, lineWidth: 10)
-                    RingView(progress: moveProgress, ringColor: .red, size: 90, lineWidth: 10)
-                }
-                .padding(.bottom, 10)
                 
                 HStack(spacing: 20) {
                     Label("Move", systemImage: "flame")

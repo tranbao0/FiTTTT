@@ -18,38 +18,6 @@ struct AddFriendView: View {
     
     var body: some View {
         VStack(spacing: 0) {
-            // Add Friends and Requests buttons section
-            HStack(spacing: 12) {
-                // Add Friends button (current view)
-                HStack {
-                    Image(systemName: "person.crop.circle.badge.plus")
-                        .font(.system(size: 18))
-                        .foregroundColor(.white)
-                    Text("Add Friends")
-                        .font(.headline)
-                        .foregroundColor(.white)
-                }
-                .padding(.horizontal, 16)
-                .padding(.vertical, 10)
-                .background(Color.black)
-                .cornerRadius(25)
-                
-                // Requests button
-                NavigationLink(destination: FriendRequestsView(requests: [])) {
-                    HStack(spacing: 4) {
-                        Text("Requests")
-                            .font(.headline)
-                            .foregroundColor(.black)
-                        Circle()
-                            .fill(Color.red)
-                            .frame(width: 25, height: 25)
-                            .overlay(Text("1").font(.caption).bold().foregroundColor(.white))
-                    }
-                }
-            }
-            .padding(.horizontal)
-            .padding(.vertical, 16)
-            
             // Search Bar
             HStack {
                 Image(systemName: "magnifyingglass")
@@ -448,8 +416,8 @@ struct AddFriendView: View {
         
         let friendStatus = Friend.FriendStatus.friends.rawValue
         
-        batch.updateData(["status": friendStatus], forDocument: incomingRef)
-        batch.updateData(["status": friendStatus], forDocument: outgoingRef)
+        batch.setData(["status": friendStatus], forDocument: incomingRef, merge: true)
+        batch.setData(["status": friendStatus], forDocument: outgoingRef, merge: true)
         
         // Commit the batch
         batch.commit { error in
@@ -602,8 +570,8 @@ struct FriendRequestsView: View {
         
         let friendStatus = Friend.FriendStatus.friends.rawValue
         
-        batch.updateData(["status": friendStatus], forDocument: incomingRef)
-        batch.updateData(["status": friendStatus], forDocument: outgoingRef)
+        batch.setData(["status": friendStatus], forDocument: incomingRef, merge: true)
+        batch.setData(["status": friendStatus], forDocument: outgoingRef, merge: true)
         
         // Commit the batch
         batch.commit { error in

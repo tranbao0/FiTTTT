@@ -5,7 +5,7 @@ struct Friend: Identifiable {
     let id: String
     let name: String
     let username: String
-    let points: Int
+    let streak: Int  // Replace points with streak
     let imageName: String
     var status: FriendStatus = .none
     
@@ -19,7 +19,7 @@ struct Friend: Identifiable {
         case friends   // Approved friend
     }
     
-    // For Firestore mapping - Updated to not check for friendStatus in user document
+    // For Firestore mapping
     static func fromDocument(_ document: DocumentSnapshot) -> Friend? {
         guard let data = document.data() else { return nil }
         
@@ -27,9 +27,9 @@ struct Friend: Identifiable {
             id: document.documentID,
             name: data["username"] as? String ?? "Unknown",
             username: data["username"] as? String ?? "Unknown",
-            points: data["completedSessions"] as? Int ?? 0,
+            streak: data["streak"] as? Int ?? 0,  // Get streak instead of points
             imageName: "person", // Default image
-            status: .none  // Default to none, will be updated separately
+            status: FriendStatus(rawValue: data["friendStatus"] as? String ?? "none") ?? .none
         )
     }
 }

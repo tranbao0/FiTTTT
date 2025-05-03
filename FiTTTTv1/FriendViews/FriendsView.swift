@@ -9,9 +9,14 @@ struct FriendsView: View {
     @State private var errorMessage = ""
     @State private var showingError = false
     @State private var showingAddFriends = false
+    @State private var currentUser: Friend?
     
     var sortedFriends: [Friend] {
-        return friends.sorted { $0.points > $1.points }
+        var allFriends = friends
+        if let currentUser = currentUser {
+            allFriends.append(currentUser)
+        }
+        return allFriends.sorted { $0.streak > $1.streak }
     }
     
     var topFriends: [Friend] {
@@ -35,11 +40,12 @@ struct FriendsView: View {
     }
     
     var body: some View {
-        VStack(spacing: 0) {
+        return VStack(spacing: 0) {
+            
             // Header
             AppHeaderView()
 
-            // Add Friends button and Search Bar
+            // Add Friends button and Pending Requests button
             HStack {
                 // Add Friend Button
                 Button(action: {
@@ -58,10 +64,10 @@ struct FriendsView: View {
                 
                 Spacer()
                 
-                // Pending Requests indicator
-                if !pendingRequests.isEmpty {
-                    NavigationLink(destination: FriendRequestsView(requests: pendingRequests)) {
-                        HStack {
+                // Pending Requests button - always visible
+                NavigationLink(destination: FriendRequestsView(requests: pendingRequests)) {
+                    HStack {
+                        if !pendingRequests.isEmpty {
                             Text("\(pendingRequests.count)")
                                 .font(.caption)
                                 .fontWeight(.bold)
@@ -69,144 +75,212 @@ struct FriendsView: View {
                                 .frame(width: 24, height: 24)
                                 .background(Color.red)
                                 .clipShape(Circle())
-                            
-                            Text("Requests")
-                                .foregroundColor(.primary)
+                        } else {
+                            Image(systemName: "person.2.wave.2")
+                                .font(.system(size: 16))
+                                .foregroundColor(.black)
                         }
+                        
+                        Text("Requests")
+                            .foregroundColor(.primary)
                     }
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 8)
+                    .background(Color.gray.opacity(0.1))
+                    .cornerRadius(8)
                 }
             }
             .padding(.horizontal)
             .padding(.vertical, 8)
 
-            if isLoading {
-                Spacer()
-                ProgressView()
-                Spacer()
-            } else if friends.isEmpty {
-                // Empty state
-                VStack(spacing: 20) {
-                    Image(systemName: "person.2.slash")
-                        .font(.system(size: 60))
-                        .foregroundColor(.gray)
-                    
-                    Text("No Friends Yet")
-                        .font(.title2)
-                        .fontWeight(.semibold)
-                    
-                    Text("Add friends to compare workouts and keep each other motivated!")
-                        .multilineTextAlignment(.center)
-                        .foregroundColor(.gray)
-                        .padding(.horizontal, 40)
-                    
-                    Button(action: {
-                        showingAddFriends = true
-                    }) {
-                        Text("Find Friends")
+            Group {
+                if isLoading {
+                    Spacer()
+                    ProgressView()
+                    Spacer()
+                } else if friends.isEmpty {
+                    // Empty state
+                    VStack(spacing: 20) {
+                        Image(systemName: "person.2.slash")
+                            .font(.system(size: 60))
+                            .foregroundColor(.gray)
+                        
+                        Text("No Friends Yet")
+                            .font(.title2)
                             .fontWeight(.semibold)
-                            .foregroundColor(.white)
-                            .frame(width: 200)
-                            .padding()
-                            .background(Color.black)
-                            .cornerRadius(12)
+                        
+                        Text("Add friends to compare workouts and keep each other motivated!")
+                            .multilineTextAlignment(.center)
+                            .foregroundColor(.gray)
+                            .padding(.horizontal, 40)
+                        
+                        Button(action: {
+                            showingAddFriends = true
+                        }) {
+                            Text("Find Friends")
+                                .fontWeight(.semibold)
+                                .foregroundColor(.white)
+                                .frame(width: 200)
+                                .padding()
+                                .background(Color.black)
+                                .cornerRadius(12)
+                        }
+                        .padding(.top, 10)
                     }
-                    .padding(.top, 10)
-                }
-                .padding(.vertical, 60)
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-            } else {
-                // Top 3 Circle Avatars
-                if !topFriends.isEmpty {
-                    HStack(spacing: 30) {
-                        ForEach(topFriends) { friend in
-                            NavigationLink(destination: FriendDetailView(friend: friend)) {
-                                VStack {
-                                    ZStack {
-                                        Circle()
-                                            .stroke(Color.black, lineWidth: friend.rank == 1 ? 3 : 1)
-                                            .frame(width: 80, height: 80)
+                    .padding(.vertical, 60)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                } else {
+                    // Top 3 Circle Avatars
+                    if !topFriends.isEmpty {
+                        HStack(spacing: 30) {
+                            let reorderedTopFriends = reorderTopThree(topFriends)
+                            
+                            ForEach(reorderedTopFriends, id: \.id) { friend in
+                                if friend.id == Auth.auth().currentUser?.uid {
+                                    NavigationLink(destination: ProfileView()) {
+                                        VStack {
+                                            ZStack {
+                                                Circle()
+                                                    .stroke(Color.black, lineWidth: friend.rank == 1 ? 3 : 1)
+                                                    .frame(width: 80, height: 80)
+                                                
+                                                Image(systemName: "person.circle.fill")
+                                                    .resizable()
+                                                    .scaledToFill()
+                                                    .frame(width: 70, height: 70)
+                                                    .clipShape(Circle())
+                                                    .foregroundColor(.gray)
+                                            }
+                                            Text(friend.id == Auth.auth().currentUser?.uid ? "You" : friend.name)
+                                                .font(.subheadline)
+                                                .bold()
+                                                .italic(friend.id == Auth.auth().currentUser?.uid)
+                                            Text("Streak: \(friend.streak)")
+                                                .font(.caption)
+                                                .foregroundColor(.gray)
+                                            Circle()
+                                                .foregroundColor(.green)
+                                                .overlay(Text("\(friend.rank)").foregroundColor(.black).bold())
+                                                .frame(width: 24, height: 24)
+                                        }
+                                    }
+                                } else {
+                                    NavigationLink(destination: FriendDetailView(friend: friend)) {
+                                        VStack {
+                                            ZStack {
+                                                Circle()
+                                                    .stroke(Color.black, lineWidth: friend.rank == 1 ? 3 : 1)
+                                                    .frame(width: 80, height: 80)
+                                                
+                                                Image(systemName: "person.circle.fill")
+                                                    .resizable()
+                                                    .scaledToFill()
+                                                    .frame(width: 70, height: 70)
+                                                    .clipShape(Circle())
+                                                    .foregroundColor(.gray)
+                                            }
+                                            Text(friend.id == Auth.auth().currentUser?.uid ? "You" : friend.name)
+                                                .font(.subheadline)
+                                                .bold()
+                                                .italic(friend.id == Auth.auth().currentUser?.uid)
+                                            Text("Streak: \(friend.streak)")
+                                                .font(.caption)
+                                                .foregroundColor(.gray)
+                                            Circle()
+                                                .foregroundColor(.green)
+                                                .overlay(Text("\(friend.rank)").foregroundColor(.black).bold())
+                                                .frame(width: 24, height: 24)
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        .padding(.vertical)
+                    }
+
+                    // Friend List
+                    List {
+                        ForEach(otherFriends) { friend in
+                            if friend.id == Auth.auth().currentUser?.uid {
+                                NavigationLink(destination: ProfileView()) {
+                                    HStack {
+                                        Text("\(friend.rank)")
+                                            .font(.headline)
+                                            .frame(width: 30)
                                         
-                                        // Use actual profile image if available
                                         Image(systemName: "person.circle.fill")
                                             .resizable()
-                                            .scaledToFill()
-                                            .frame(width: 70, height: 70)
+                                            .frame(width: 30, height: 30)
                                             .clipShape(Circle())
                                             .foregroundColor(.gray)
+                                        
+                                        Text(friend.id == Auth.auth().currentUser?.uid ? "You" : friend.name)
+                                            .font(.headline)
+                                            .italic(friend.id == Auth.auth().currentUser?.uid)
+                                        
+                                        Spacer()
+                                        
+                                        Text("Streak: \(friend.streak)")
+                                            .fontWeight(.semibold)
                                     }
-                                    Text(friend.name)
-                                        .font(.subheadline)
-                                        .bold()
-                                    Text("\(friend.points) pts")
-                                        .font(.caption)
-                                        .foregroundColor(.gray)
-                                    Circle()
-                                        .foregroundColor(.green)
-                                        .overlay(Text("\(friend.rank)").foregroundColor(.black).bold())
-                                        .frame(width: 24, height: 24)
+                                    .padding(.vertical, 6)
+                                }
+                            } else {
+                                NavigationLink(destination: FriendDetailView(friend: friend)) {
+                                    HStack {
+                                        Text("\(friend.rank)")
+                                            .font(.headline)
+                                            .frame(width: 30)
+                                        
+                                        Image(systemName: "person.circle.fill")
+                                            .resizable()
+                                            .frame(width: 30, height: 30)
+                                            .clipShape(Circle())
+                                            .foregroundColor(.gray)
+                                        
+                                        Text(friend.id == Auth.auth().currentUser?.uid ? "You" : friend.name)
+                                            .font(.headline)
+                                            .italic(friend.id == Auth.auth().currentUser?.uid)
+                                        
+                                        Spacer()
+                                        
+                                        Text("Streak: \(friend.streak)")
+                                            .fontWeight(.semibold)
+                                    }
+                                    .padding(.vertical, 6)
                                 }
                             }
                         }
                     }
-                    .padding(.vertical)
-                }
+                    .listStyle(.plain)
 
-                // Friend List
-                List {
-                    ForEach(otherFriends) { friend in
-                        NavigationLink(destination: FriendDetailView(friend: friend)) {
-                            HStack {
-                                Text("\(friend.rank)")
-                                    .font(.headline)
-                                    .frame(width: 30)
-                                
-                                Image(systemName: "person.circle.fill")
-                                    .resizable()
-                                    .frame(width: 30, height: 30)
-                                    .clipShape(Circle())
-                                    .foregroundColor(.gray)
-                                
-                                Text(friend.name)
-                                    .font(.headline)
-                                
-                                Spacer()
-                                
-                                Text("\(friend.points) pts")
-                                    .fontWeight(.semibold)
-                            }
-                            .padding(.vertical, 6)
-                        }
+                // Bottom Tab Bar
+                HStack {
+                    Spacer()
+                    NavigationLink(destination: ContentView()) {
+                        Image(systemName: "house")
+                            .font(.system(size: 24))
                     }
+                    Spacer()
+                    NavigationLink(destination: LogWorkoutView()) {
+                        Image(systemName: "dumbbell")
+                            .font(.system(size: 24))
+                    }
+                    Spacer()
+                    Image(systemName: "person.2")
+                        .font(.system(size: 32))
+                    Spacer()
+                    NavigationLink(destination: CalendarView()) {
+                        Image(systemName: "calendar")
+                            .font(.system(size: 24))
+                    }
+                    Spacer()
                 }
-                .listStyle(.plain)
+                .padding()
+                .background(Color.black)
+                .foregroundColor(.white)
             }
-
-            // Bottom Tab Bar
-            HStack {
-                Spacer()
-                NavigationLink(destination: ContentView()) {
-                    Image(systemName: "house")
-                        .font(.system(size: 24))
-                }
-                Spacer()
-                NavigationLink(destination: LogWorkoutView()) {
-                    Image(systemName: "dumbbell")
-                        .font(.system(size: 24))
-                }
-                Spacer()
-                Image(systemName: "person.2")
-                    .font(.system(size: 32))
-                Spacer()
-                NavigationLink(destination: CalendarView()) {
-                    Image(systemName: "calendar")
-                        .font(.system(size: 24))
-                }
-                Spacer()
             }
-            .padding()
-            .background(Color.black)
-            .foregroundColor(.white)
-        }
         .background(Color.white)
         .edgesIgnoringSafeArea(.bottom)
         .navigationBarHidden(true)
@@ -226,91 +300,127 @@ struct FriendsView: View {
         }
     }
     
-    private func loadFriends() {
-        guard let currentUserId = Auth.auth().currentUser?.uid else {
-            errorMessage = "You need to be logged in to view friends"
-            showingError = true
-            isLoading = false
-            return
-        }
+    // Helper function to reorder top 3 friends
+    func reorderTopThree(_ friends: [Friend]) -> [Friend] {
+        guard friends.count >= 3 else {
+                return friends
+            }
         
-        let db = Firestore.firestore()
-        
-        // Get all friend requests
-        db.collection("users").document(currentUserId).collection("friendRequests")
-            .getDocuments { snapshot, error in
-                if let error = error {
-                    errorMessage = "Error loading friends: \(error.localizedDescription)"
-                    showingError = true
-                    isLoading = false
-                    return
-                }
+        // Rearrange to: #2, #1, #3
+        return [friends[1], friends[0], friends[2]]
+    }
+    
+        func loadFriends() {
+            guard let currentUserId = Auth.auth().currentUser?.uid else {
+                errorMessage = "You need to be logged in to view friends"
+                showingError = true
+                isLoading = false
+                return
+            }
                 
-                guard let documents = snapshot?.documents else {
-                    isLoading = false
-                    return
-                }
+                let db = Firestore.firestore()
                 
-                // Filter for accepted friends and pending requests
-                var acceptedFriendIds: [String] = []
-                var pendingRequestIds: [String] = []
+                // Create a dispatch group to handle all async operations
+                let loadingGroup = DispatchGroup()
                 
-                for document in documents {
-                    if let status = document.data()["status"] as? String {
-                        if status == Friend.FriendStatus.friends.rawValue {
-                            acceptedFriendIds.append(document.documentID)
-                        } else if status == Friend.FriendStatus.requested.rawValue {
-                            pendingRequestIds.append(document.documentID)
-                        }
+                // Load current user data
+                loadingGroup.enter()
+                db.collection("users").document(currentUserId).getDocument { docSnapshot, error in
+                    defer { loadingGroup.leave() }
+                    
+                    if let error = error {
+                        print("Error loading current user: \(error.localizedDescription)")
+                    }
+                    
+                    if let docSnapshot = docSnapshot, docSnapshot.exists,
+                       var user = Friend.fromDocument(docSnapshot) {
+                        user.status = .friends
+                        self.currentUser = user
                     }
                 }
                 
-                // Load friend details
-                var loadedFriends: [Friend] = []
-                var loadedRequests: [Friend] = []
-                let group = DispatchGroup()
-                
-                // Load accepted friends
-                for friendId in acceptedFriendIds {
-                    group.enter()
-                    db.collection("users").document(friendId).getDocument { docSnapshot, error in
-                        defer { group.leave() }
-                        
+                // Get all friend requests
+                loadingGroup.enter()
+                db.collection("users").document(currentUserId).collection("friendRequests")
+                    .getDocuments { snapshot, error in
                         if let error = error {
-                            print("Error loading friend data: \(error.localizedDescription)")
+                            errorMessage = "Error loading friends: \(error.localizedDescription)"
+                            showingError = true
+                            loadingGroup.leave()
                             return
                         }
                         
-                        if let docSnapshot = docSnapshot, docSnapshot.exists,
-                           var friend = Friend.fromDocument(docSnapshot) {
-                            friend.status = .friends
-                            loadedFriends.append(friend)
-                        }
-                    }
-                }
-                
-                // Load pending requests
-                for requestId in pendingRequestIds {
-                    group.enter()
-                    db.collection("users").document(requestId).getDocument { docSnapshot, error in
-                        defer { group.leave() }
-                        
-                        if let error = error {
-                            print("Error loading request data: \(error.localizedDescription)")
+                        guard let documents = snapshot?.documents else {
+                            loadingGroup.leave()
                             return
                         }
                         
-                        if let docSnapshot = docSnapshot, docSnapshot.exists,
-                           var friend = Friend.fromDocument(docSnapshot) {
-                            friend.status = .requested
-                            loadedRequests.append(friend)
+                        // Filter for accepted friends and pending requests
+                        var acceptedFriendIds: [String] = []
+                        var pendingRequestIds: [String] = []
+                        
+                        for document in documents {
+                            if let status = document.data()["status"] as? String {
+                                if status == Friend.FriendStatus.friends.rawValue {
+                                    acceptedFriendIds.append(document.documentID)
+                                } else if status == Friend.FriendStatus.requested.rawValue {
+                                    pendingRequestIds.append(document.documentID)
+                                }
+                            }
+                        }
+                        
+                        // Load friend details
+                        var loadedFriends: [Friend] = []
+                        var loadedRequests: [Friend] = []
+                        let group = DispatchGroup()
+                        
+                        // Load accepted friends
+                        for friendId in acceptedFriendIds {
+                            group.enter()
+                            db.collection("users").document(friendId).getDocument { docSnapshot, error in
+                                defer { group.leave() }
+                                
+                                if let error = error {
+                                    print("Error loading friend data: \(error.localizedDescription)")
+                                    return
+                                }
+                                
+                                if let docSnapshot = docSnapshot, docSnapshot.exists,
+                                   var friend = Friend.fromDocument(docSnapshot) {
+                                    friend.status = .friends
+                                    loadedFriends.append(friend)
+                                }
+                            }
+                        }
+                        
+                        // Load pending requests
+                        for requestId in pendingRequestIds {
+                            group.enter()
+                            db.collection("users").document(requestId).getDocument { docSnapshot, error in
+                                defer { group.leave() }
+                                
+                                if let error = error {
+                                    print("Error loading request data: \(error.localizedDescription)")
+                                    return
+                                }
+                                
+                                if let docSnapshot = docSnapshot, docSnapshot.exists,
+                                   var friend = Friend.fromDocument(docSnapshot) {
+                                    friend.status = .requested
+                                    loadedRequests.append(friend)
+                                }
+                            }
+                        }
+                        
+                        group.notify(queue: .main) {
+                            self.friends = loadedFriends
+                            self.pendingRequests = loadedRequests
+                            loadingGroup.leave()
                         }
                     }
-                }
                 
-                group.notify(queue: .main) {
-                    self.friends = loadedFriends
-                    self.pendingRequests = loadedRequests
+                // When all loading is complete
+                loadingGroup.notify(queue: .main) {
                     self.isLoading = false
                 }
             }
