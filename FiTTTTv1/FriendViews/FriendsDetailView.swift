@@ -2,6 +2,12 @@ import SwiftUI
 import FirebaseFirestore
 import FirebaseAuth
 
+// Add an enum for notification types
+enum AppNotificationType: String {
+    case remind
+    case confront
+}
+
 struct FriendDetailView: View {
     let friend: Friend
 
@@ -10,6 +16,8 @@ struct FriendDetailView: View {
     @State private var error = ""
     @State private var showingSuccess = false
     @State private var successMessage = ""
+    @State private var showingError = false
+    @State private var errorMessage = ""
 
     var hasUncompletedWorkoutToday: Bool {
         let today = Date()
@@ -112,10 +120,17 @@ struct FriendDetailView: View {
         .onAppear {
             fetchFriendWorkouts()
         }
+        // Success popup (for successful notifications)
         .alert("Success", isPresented: $showingSuccess) {
             Button("OK", role: .cancel) { }
         } message: {
             Text(successMessage)
+        }
+        // Error popup (for failed notifications)
+        .alert("Error", isPresented: $showingError) {
+            Button("OK", role: .cancel) { }
+        } message: {
+            Text(errorMessage)
         }
     }
 
@@ -248,15 +263,20 @@ struct FriendDetailView: View {
             }
     }
 
-    private func sendNotification(message: String, type: AppNotification.NotificationType) {
-        guard let currentUserId = Auth.auth().currentUser?.uid else { return }
+    private func sendNotification(message: String, type: AppNotificationType) {
+        guard let currentUserId = Auth.auth().currentUser?.uid else {
+            errorMessage = "You must be logged in to send notifications"
+            showingError = true
+            return
+        }
         
         let db = Firestore.firestore()
         
         // Get current user's username first
         db.collection("users").document(currentUserId).getDocument { snapshot, error in
             if let error = error {
-                print("Error getting user data: \(error.localizedDescription)")
+                errorMessage = "Error getting user data: \(error.localizedDescription)"
+                showingError = true
                 return
             }
             
@@ -276,10 +296,16 @@ struct FriendDetailView: View {
                 .collection("notifications")
                 .addDocument(data: notification) { error in
                     if let error = error {
-                        print("Error sending notification: \(error.localizedDescription)")
+                        errorMessage = "Error sending notification: \(error.localizedDescription)"
+                        showingError = true
                     } else {
-                        // Show success feedback
-                        successMessage = type == .remind ? "Reminder sent!" : "Confronted!"
+                        // Show success message based on the type of notification
+                        switch type {
+                        case .remind:
+                            successMessage = "Reminder sent to \(friend.name)!"
+                        case .confront:
+                            successMessage = "\(friend.name) has been confronted!"
+                        }
                         showingSuccess = true
                     }
                 }

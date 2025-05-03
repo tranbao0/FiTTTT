@@ -90,6 +90,34 @@ class NotificationManager: ObservableObject {
         }
     }
     
+    func sendNotification(to userId: String, fromUsername: String, type: String, message: String) {
+        let db = Firestore.firestore()
+
+        let notificationData: [String: Any] = [
+            "fromUserId": Auth.auth().currentUser?.uid ?? "",
+            "fromUsername": fromUsername,
+            "type": type,
+            "message": message,
+            "timestamp": Timestamp(),
+            "read": false
+        ]
+
+        print("🚨 Attempting to send to user ID: \(userId)")
+        print("📝 Notification data: \(notificationData)")
+
+        db.collection("users")
+            .document(userId)
+            .collection("notifications")
+            .addDocument(data: notificationData) { error in
+                if let error = error {
+                    print("❌ Failed to send notification: \(error.localizedDescription)")
+                } else {
+                    print("✅ Notification sent successfully!")
+                }
+            }
+    }
+
+    
     private func showNotification(_ notification: AppNotification) {
         self.currentNotification = notification
         self.showNotification = true

@@ -74,11 +74,19 @@ struct AppHeaderView: View {
                     .foregroundColor(.black)
             }
             Spacer()
-            NavigationLink(destination: ProfileView()) {
-                Image(systemName: "person.crop.circle")
-                    .resizable()
-                    .frame(width: 30, height: 30)
-                    .foregroundColor(.black)
+            
+            // Add HStack for icons with notification badge
+            HStack(spacing: 16) {
+                NavigationLink(destination: NotificationsList()) {
+                    NotificationBadge()
+                }
+                
+                NavigationLink(destination: ProfileView()) {
+                    Image(systemName: "person.crop.circle")
+                        .resizable()
+                        .frame(width: 30, height: 30)
+                        .foregroundColor(.black)
+                }
             }
         }
         .padding()
@@ -181,40 +189,11 @@ struct ContentView: View {
     }
     
     var body: some View {
-            NavigationStack {
-                ZStack {
-                    VStack(spacing: 0) {
-                        HStack {
-                            Image(systemName: "line.horizontal.3")
-                            Spacer()
-                            VStack(spacing: 4) {
-                                Image("FiTTTTLogoBlacked")
-                                    .resizable()
-                                    .aspectRatio(contentMode: .fit)
-                                    .frame(width: 140, height: 40)
-                                Text("Accountability in Fitness")
-                                    .font(.subheadline)
-                                    .foregroundColor(.black)
-                            }
-                            Spacer()
-                            
-                            HStack(spacing: 16) {
-                                // Add notification badge
-                                NotificationBadge()
-                                
-                                NavigationLink(destination: ProfileView()) {
-                                    Image(systemName: "person.crop.circle")
-                                        .resizable()
-                                        .frame(width: 30, height: 30)
-                                        .foregroundColor(.black)
-                                }
-                            }
-                        }
-                        .padding()
-                        .background(Color.white)
-                        .overlay(Rectangle().frame(height: 1).foregroundColor(.black), alignment: .bottom)
-
-
+        NavigationStack {
+            ZStack {
+                VStack(spacing: 0) {
+                AppHeaderView()
+                        
                 // Middle ScrollView
                 ScrollView {
                     VStack(spacing: 8) {
@@ -422,22 +401,47 @@ struct ContentView: View {
                         }
                     }
                     .padding(.top, 10)
-                }
-                .overlay {
-                    if showConfetti {
-                        ConfettiView()
-                            .onAppear {
-                                // Remove confetti after animation completes
-                                DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
-                                    showConfetti = false
-                                }
+                        
+                        // Bottom Tab Bar
+                        HStack {
+                            Spacer()
+                            Image(systemName: "house")
+                                .font(.system(size: 32))
+                            Spacer()
+                            NavigationLink(destination: LogWorkoutView()) {
+                                Image(systemName: "dumbbell")
+                                    .font(.system(size: 24))
                             }
+                            Spacer()
+                            NavigationLink(destination: FriendsView()) {
+                                Image(systemName: "person.2")
+                                    .font(.system(size: 24))
+                            }
+                            Spacer()
+                            NavigationLink(destination: CalendarView()) {
+                                Image(systemName: "calendar")
+                                    .font(.system(size: 24))
+                            }
+                            Spacer()
+                        }
+                        .padding()
+                        .background(Color.black)
+                        .foregroundColor(.white)
                     }
+                    .overlay {
+                        if showConfetti {
+                            ConfettiView()
+                                .onAppear {
+                                    // Remove confetti after animation completes
+                                    DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+                                        showConfetti = false
+                                    }
+                                }
+                        }
+                    }
+                    // Add notification overlay
+                    NotificationOverlay()
                 }
-                    .padding()
-                    .background(Color.white)
-                    .overlay(Rectangle().frame(height: 1).foregroundColor(.black), alignment: .bottom)
-            }
             .edgesIgnoringSafeArea(.bottom)
             .background(Color.white)
             .navigationBarBackButtonHidden(true)

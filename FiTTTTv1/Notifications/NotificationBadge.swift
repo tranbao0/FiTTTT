@@ -9,6 +9,7 @@ struct NotificationBadge: View {
         ZStack(alignment: .topTrailing) {
             Image(systemName: "bell")
                 .font(.system(size: 24))
+                .foregroundColor(.black)  // Make sure bell is visible
             
             if notificationManager.hasUnreadNotifications {
                 Circle()
