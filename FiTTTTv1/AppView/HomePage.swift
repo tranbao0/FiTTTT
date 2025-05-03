@@ -210,58 +210,56 @@ struct ContentView: View {
 
                 // Middle ScrollView
                 ScrollView {
-                    VStack(spacing: 20) {
-                        // Build Routine Section
-                        VStack(spacing: 8) {
-                            Text("Personalize Your Plans")
-                                .font(.title2)
-                                .bold()
-                            Text("Make a goal and build your routine")
-                                .font(.subheadline)
-                                .foregroundColor(.gray)
-                            NavigationLink(destination: LogWorkoutView()) {
-                                Text("Build Routine")
-                                    .fontWeight(.bold)
-                                    .frame(maxWidth: .infinity)
-                                    .frame(height: 50)
-                                    .background(Color.black)
-                                    .foregroundColor(.white)
-                                    .cornerRadius(16)
-                                    .padding(.horizontal)
-                            }
-                            
-                            // Check-in Button with morphing animation
-                            Button(action: {
-                                if !hasCheckedInToday {
-                                    updateStreak()
-                                }
-                            }) {
-                                Text(hasCheckedInToday ? "Checked In" : "Check In Today")
-                                    .fontWeight(.bold)
-                                    .frame(maxWidth: .infinity)
-                                    .frame(height: 50)
-                                    .background(hasCheckedInToday ? Color.gray : Color.green)
-                                    .foregroundColor(.white)
-                                    .cornerRadius(16)
-                                    .padding(.horizontal)
-                                    .opacity(hasCheckedInToday ? 0.7 : 1.0)
-                            }
-                            .disabled(hasCheckedInToday)
-                            .padding(.top, 8)
-                            .animation(.easeInOut(duration: 0.3), value: hasCheckedInToday)
-                            
-                            // Streak Message
-                            if showStreak {
-                                Text("🔥 Day \(streak) of your streak! Keep it up!")
-                                    .font(.headline)
-                                    .foregroundColor(.orange)
-                                    .padding(.top, 16)
-                                    .transition(.opacity.combined(with: .slide))
-                            }
+                    VStack(spacing: 8) {
+                        Text("Personalize Your Plans")
+                            .font(.title2)
+                            .bold()
+                        Text("Make a goal and build your routine")
+                            .font(.subheadline)
+                            .foregroundColor(.gray)
+                        NavigationLink(destination: LogWorkoutView()) {
+                            Text("Build Routine")
+                                .fontWeight(.bold)
+                                .frame(maxWidth: .infinity)
+                                .frame(height: 50)
+                                .background(Color.black)
+                                .foregroundColor(.white)
+                                .cornerRadius(16)
+                                .padding(.horizontal)
                         }
-                        .padding()
-                        .background(Color.white)
-                        .overlay(Rectangle().frame(height: 1).foregroundColor(.black), alignment: .bottom)
+                        
+                        // Check-in Button
+                        Button(action: {
+                            if !hasCheckedInToday {
+                                updateStreak()
+                            }
+                        }) {
+                            Text(hasCheckedInToday ? "Checked In" : "Check In Today")
+                                .fontWeight(.bold)
+                                .frame(maxWidth: .infinity)
+                                .frame(height: 50)
+                                .background(hasCheckedInToday ? Color.gray : Color.green)
+                                .foregroundColor(.white)
+                                .cornerRadius(16)
+                                .padding(.horizontal)
+                                .opacity(hasCheckedInToday ? 0.7 : 1.0)
+                        }
+                        .disabled(hasCheckedInToday)
+                        .padding(.top, 8)
+                        .animation(.easeInOut(duration: 0.3), value: hasCheckedInToday)
+                        
+                        // Add the streak message right after the button
+                        if streak > 0 {
+                            Text("🔥 Day \(streak) of your streak! Keep it up!")
+                                .font(.headline)
+                                .foregroundColor(.orange)
+                                .padding(.top, 16)
+                                .multilineTextAlignment(.center)
+                        }
+                    }
+                    .padding()
+                    .background(Color.white)
+                    .overlay(Rectangle().frame(height: 1).foregroundColor(.black), alignment: .bottom)
                         
                         // Rest of your existing content
                         // Top Picks Header
@@ -463,5 +461,4 @@ struct ContentView: View {
                 checkIfUserCheckedInToday()
             }
         }
-    }
 }
