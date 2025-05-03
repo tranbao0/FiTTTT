@@ -177,11 +177,6 @@ struct ContentView: View {
                 hasCheckedInToday = true
                 showConfetti = true
                 showStreak = true
-                
-                // Hide streak message after 5 seconds
-                DispatchQueue.main.asyncAfter(deadline: .now() + 5) {
-                    showStreak = false
-                }
             }
         }
     }
@@ -235,30 +230,33 @@ struct ContentView: View {
                                     .padding(.horizontal)
                             }
                             
-                            // New Check-in Button
-                            if !hasCheckedInToday {
-                                Button(action: {
+                            // Check-in Button with morphing animation
+                            Button(action: {
+                                if !hasCheckedInToday {
                                     updateStreak()
-                                }) {
-                                    Text("Check In Today")
-                                        .fontWeight(.bold)
-                                        .frame(maxWidth: .infinity)
-                                        .frame(height: 50)
-                                        .background(Color.green)
-                                        .foregroundColor(.white)
-                                        .cornerRadius(16)
-                                        .padding(.horizontal)
                                 }
-                                .padding(.top, 8)
+                            }) {
+                                Text(hasCheckedInToday ? "Checked In" : "Check In Today")
+                                    .fontWeight(.bold)
+                                    .frame(maxWidth: .infinity)
+                                    .frame(height: 50)
+                                    .background(hasCheckedInToday ? Color.gray : Color.green)
+                                    .foregroundColor(.white)
+                                    .cornerRadius(16)
+                                    .padding(.horizontal)
+                                    .opacity(hasCheckedInToday ? 0.7 : 1.0)
                             }
+                            .disabled(hasCheckedInToday)
+                            .padding(.top, 8)
+                            .animation(.easeInOut(duration: 0.3), value: hasCheckedInToday)
                             
                             // Streak Message
                             if showStreak {
                                 Text("🔥 Day \(streak) of your streak! Keep it up!")
                                     .font(.headline)
                                     .foregroundColor(.orange)
-                                    .padding(.top, 8)
-                                    .transition(.opacity)
+                                    .padding(.top, 16)
+                                    .transition(.opacity.combined(with: .slide))
                             }
                         }
                         .padding()
@@ -272,7 +270,6 @@ struct ContentView: View {
                             .frame(maxWidth: .infinity, alignment: .leading)
                             .padding(.horizontal)
 
-                        // Keep all your existing code for video scrolling and trending courses
                         // Swipeable Video Scroll
                         ScrollView(.horizontal, showsIndicators: false) {
                             HStack(spacing: 16) {
