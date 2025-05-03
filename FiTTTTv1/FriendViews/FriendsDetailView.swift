@@ -8,6 +8,8 @@ struct FriendDetailView: View {
     @State private var friendWorkouts: [Workout] = []
     @State private var isLoading = true
     @State private var error = ""
+    @State private var showingSuccess = false
+    @State private var successMessage = ""
 
     var hasUncompletedWorkoutToday: Bool {
         let today = Date()
@@ -39,9 +41,9 @@ struct FriendDetailView: View {
                 if hasUncompletedWorkoutToday {
                     if friend.streak == 0 {
                         Button(action: {
-                            sendNotification(message: "WHY DID YOU SKIP YESTERDAY?!?!?!")
+                            sendNotification(message: "WHY DID YOU SKIP YESTERDAY?!?!?!", type: .confront)
                         }) {
-                            Text("Confront")
+                            Text("CONFRONT")
                                 .bold()
                                 .padding(.vertical, 8)
                                 .padding(.horizontal, 16)
@@ -51,7 +53,7 @@ struct FriendDetailView: View {
                         }
                     } else {
                         Button(action: {
-                            sendNotification(message: "Reminder to get your workout in today!")
+                            sendNotification(message: "Reminder to complete your workout today!", type: .remind)
                         }) {
                             Text("Remind")
                                 .bold()
@@ -110,6 +112,11 @@ struct FriendDetailView: View {
         .onAppear {
             fetchFriendWorkouts()
         }
+        .alert("Success", isPresented: $showingSuccess) {
+            Button("OK", role: .cancel) { }
+        } message: {
+            Text(successMessage)
+        }
     }
 
     private func workoutCard(_ workout: Workout) -> some View {
@@ -151,7 +158,7 @@ struct FriendDetailView: View {
                         .font(.subheadline)
                         .foregroundColor(.secondary)
 
-                    ForEach(days, id: \ .self) { day in
+                    ForEach(days, id: \.self) { day in
                         Text(day)
                             .font(.caption)
                             .padding(.horizontal, 6)
@@ -241,19 +248,41 @@ struct FriendDetailView: View {
             }
     }
 
-    private func sendNotification(message: String) {
-            guard let currentUserId = Auth.auth().currentUser?.uid else { return }
-            let db = Firestore.firestore()
-
+    private func sendNotification(message: String, type: AppNotification.NotificationType) {
+        guard let currentUserId = Auth.auth().currentUser?.uid else { return }
+        
+        let db = Firestore.firestore()
+        
+        // Get current user's username first
+        db.collection("users").document(currentUserId).getDocument { snapshot, error in
+            if let error = error {
+                print("Error getting user data: \(error.localizedDescription)")
+                return
+            }
+            
+            let username = snapshot?.data()?["username"] as? String ?? "Unknown"
+            
             let notification = [
                 "message": message,
                 "timestamp": FieldValue.serverTimestamp(),
-                "read": false
+                "read": false,
+                "fromUserId": currentUserId,
+                "fromUsername": username,
+                "type": type.rawValue
             ] as [String: Any]
-
+            
             db.collection("users")
                 .document(friend.id)
                 .collection("notifications")
-                .addDocument(data: notification)
+                .addDocument(data: notification) { error in
+                    if let error = error {
+                        print("Error sending notification: \(error.localizedDescription)")
+                    } else {
+                        // Show success feedback
+                        successMessage = type == .remind ? "Reminder sent!" : "Confronted!"
+                        showingSuccess = true
+                    }
+                }
         }
+    }
 }

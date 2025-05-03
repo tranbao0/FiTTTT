@@ -31,7 +31,6 @@ struct ConfettiView: View {
     }
 }
 
-// MARK: - YouTube Embed View
 struct YouTubeView: UIViewRepresentable {
     let videoID: String
 
@@ -51,7 +50,6 @@ struct YouTubeView: UIViewRepresentable {
     }
 }
 
-// MARK: - Placeholder Course Detail View
 struct CourseDetailView: View {
     let title: String
     var body: some View {
@@ -90,6 +88,7 @@ struct AppHeaderView: View {
 }
 
 struct ContentView: View {
+    @ObservedObject var notificationManager = NotificationManager.shared
     @State private var hasCheckedInToday: Bool = false
     @State private var streak: Int = 0
     @State private var showConfetti = false
@@ -182,31 +181,39 @@ struct ContentView: View {
     }
     
     var body: some View {
-        NavigationStack {
-            VStack(spacing: 0) {
-                HStack {
-                    Image(systemName: "line.horizontal.3")
-                    Spacer()
-                    VStack(spacing: 4) {
-                        Image("FiTTTTLogoBlacked")
-                            .resizable()
-                            .aspectRatio(contentMode: .fit)
-                            .frame(width: 140, height: 40)
-                        Text("Accountability in Fitness")
-                            .font(.subheadline)
-                            .foregroundColor(.black)
-                    }
-                    Spacer()
-                    NavigationLink(destination: ProfileView()) {
-                        Image(systemName: "person.crop.circle")
-                            .resizable()
-                            .frame(width: 30, height: 30)
-                            .foregroundColor(.black)
-                    }
-                }
-                .padding()
-                .background(Color.white)
-                .overlay(Rectangle().frame(height: 1).foregroundColor(.black), alignment: .bottom)
+            NavigationStack {
+                ZStack {
+                    VStack(spacing: 0) {
+                        HStack {
+                            Image(systemName: "line.horizontal.3")
+                            Spacer()
+                            VStack(spacing: 4) {
+                                Image("FiTTTTLogoBlacked")
+                                    .resizable()
+                                    .aspectRatio(contentMode: .fit)
+                                    .frame(width: 140, height: 40)
+                                Text("Accountability in Fitness")
+                                    .font(.subheadline)
+                                    .foregroundColor(.black)
+                            }
+                            Spacer()
+                            
+                            HStack(spacing: 16) {
+                                // Add notification badge
+                                NotificationBadge()
+                                
+                                NavigationLink(destination: ProfileView()) {
+                                    Image(systemName: "person.crop.circle")
+                                        .resizable()
+                                        .frame(width: 30, height: 30)
+                                        .foregroundColor(.black)
+                                }
+                            }
+                        }
+                        .padding()
+                        .background(Color.white)
+                        .overlay(Rectangle().frame(height: 1).foregroundColor(.black), alignment: .bottom)
+
 
                 // Middle ScrollView
                 ScrollView {
@@ -427,38 +434,26 @@ struct ContentView: View {
                             }
                     }
                 }
-
-                // Bottom Tab Bar
-                HStack {
-                    Spacer()
-                    Image(systemName: "house")
-                        .font(.system(size: 32))
-                    Spacer()
-                        NavigationLink(destination: LogWorkoutView()) {
-                            Image(systemName: "dumbbell")
-                                .font(.system(size: 24))
-                        }
-                    Spacer()
-                        NavigationLink(destination: FriendsView()) {
-                            Image(systemName: "person.2")
-                                .font(.system(size: 24))
-                        }
-                    Spacer()
-                        NavigationLink(destination: CalendarView()) {
-                            Image(systemName: "calendar")
-                                .font(.system(size: 24))
-                        }
-                    Spacer()
-                    }
-                .padding()
-                .background(Color.black)
-                .foregroundColor(.white)
+                    .padding()
+                    .background(Color.white)
+                    .overlay(Rectangle().frame(height: 1).foregroundColor(.black), alignment: .bottom)
             }
             .edgesIgnoringSafeArea(.bottom)
             .background(Color.white)
             .navigationBarBackButtonHidden(true)
             .onAppear {
                 checkIfUserCheckedInToday()
+                
+                
+            // Add notification overlay
+                NotificationOverlay()
+            }
+            .onAppear {
+                notificationManager.startListening()
+            }
+            .onDisappear {
+                notificationManager.stopListening()
             }
         }
+    }
 }

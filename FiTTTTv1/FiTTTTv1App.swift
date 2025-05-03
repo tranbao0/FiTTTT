@@ -20,21 +20,25 @@ class AppDelegate: NSObject, UIApplicationDelegate {
 
 @main
 struct FiTTTTv1App: App {
-
-    // firebase set up delegate
     @UIApplicationDelegateAdaptor(AppDelegate.self) var delegate
     @AppStorage("isLoggedIn") var isLoggedIn = false
     
     var body: some Scene {
         WindowGroup {
             NavigationView {
-                if isLoggedIn {
-                    ContentView()
-                } else {
-                    OnboardingView()
+                ZStack {
+                    if isLoggedIn {
+                        ContentView()
+                    } else {
+                        OnboardingView()
+                    }
+                    
+                    // Add notification overlay globally
+                    if isLoggedIn {
+                        NotificationOverlay()
+                    }
                 }
             }
         }
     }
-    
 }
