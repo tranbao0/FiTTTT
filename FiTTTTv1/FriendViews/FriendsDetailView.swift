@@ -1,64 +1,259 @@
 import SwiftUI
+import FirebaseFirestore
+import FirebaseAuth
 
 struct FriendDetailView: View {
-    let friend: Friend  
+    let friend: Friend
 
-    var moveProgress: Double { friend.name == "You" ? 0.85 : 0.45 }
-    var exerciseProgress: Double { friend.name == "You" ? 0.6 : 0.3 }
-    var standProgress: Double { friend.name == "You" ? 0.9 : 0.4 }
+    @State private var friendWorkouts: [Workout] = []
+    @State private var isLoading = true
+    @State private var error = ""
+
+    var hasUncompletedWorkoutToday: Bool {
+        let today = Date()
+        return friendWorkouts.contains { workout in
+            guard let lastCompleted = workout.lastCompletedDate else { return true }
+            return !Calendar.current.isDate(lastCompleted, inSameDayAs: today)
+        }
+    }
 
     var body: some View {
         ScrollView {
             VStack(spacing: 20) {
-                Image(friend.imageName)
+                Image(systemName: "person.circle.fill")
                     .resizable()
                     .scaledToFill()
                     .frame(width: 120, height: 120)
                     .clipShape(Circle())
                     .shadow(radius: 5)
-                
+                    .foregroundColor(.gray)
+
                 Text(friend.name)
                     .font(.largeTitle)
                     .bold()
-                
+
                 Text("Streak: \(friend.streak) days")
                     .font(.title2)
                     .foregroundColor(.gray)
-                
-                HStack(spacing: 20) {
-                    Label("Move", systemImage: "flame")
-                        .foregroundColor(.red)
-                    Label("Exercise", systemImage: "heart")
-                        .foregroundColor(.green)
-                    Label("Stand", systemImage: "figure.stand")
-                        .foregroundColor(.blue)
-                }
-                .font(.caption)
 
-                Divider()
-                
-                VStack(alignment: .leading, spacing: 10) {
-                    Text("Recent Activities")
-                        .font(.headline)
-                    if friend.name == "You" {
-                        Text("• Ran 7km")
-                        Text("• 4 workouts completed")
-                        Text("• Gained 400 points")
+                if hasUncompletedWorkoutToday {
+                    if friend.streak == 0 {
+                        Button(action: {
+                            sendNotification(message: "WHY DID YOU SKIP YESTERDAY?!?!?!")
+                        }) {
+                            Text("Confront")
+                                .bold()
+                                .padding(.vertical, 8)
+                                .padding(.horizontal, 16)
+                                .background(Color.red)
+                                .foregroundColor(.white)
+                                .cornerRadius(10)
+                        }
                     } else {
-                        Text("• Walked 2km")
-                        Text("• 2 workouts completed")
-                        Text("• Gained 150 points")
+                        Button(action: {
+                            sendNotification(message: "Reminder to get your workout in today!")
+                        }) {
+                            Text("Remind")
+                                .bold()
+                                .padding(.vertical, 8)
+                                .padding(.horizontal, 16)
+                                .background(Color.yellow)
+                                .foregroundColor(.black)
+                                .cornerRadius(10)
+                        }
                     }
                 }
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(.horizontal)
-                
+
+                Divider()
+
+                // Today's Activities Section
+                VStack(alignment: .leading, spacing: 15) {
+                    Text("Today's Workouts")
+                        .font(.headline)
+                        .padding(.horizontal)
+
+                    if isLoading {
+                        ProgressView()
+                            .frame(maxWidth: .infinity)
+                            .padding()
+                    } else if !error.isEmpty {
+                        Text("Error loading workouts: \(error)")
+                            .foregroundColor(.red)
+                            .padding(.horizontal)
+                    } else if friendWorkouts.isEmpty {
+                        VStack(spacing: 8) {
+                            Image(systemName: "calendar.badge.exclamationmark")
+                                .font(.system(size: 30))
+                                .foregroundColor(.secondary)
+                            Text("No activities")
+                                .font(.subheadline)
+                                .foregroundColor(.secondary)
+                        }
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 20)
+                        .background(Color.gray.opacity(0.1))
+                        .cornerRadius(12)
+                        .padding(.horizontal)
+                    } else {
+                        ForEach(friendWorkouts) { workout in
+                            workoutCard(workout)
+                        }
+                    }
+                }
+                .padding(.top, 10)
+
                 Spacer()
             }
             .padding()
         }
         .navigationTitle(friend.name)
+        .onAppear {
+            fetchFriendWorkouts()
+        }
     }
+
+    private func workoutCard(_ workout: Workout) -> some View {
+        let isWorkoutCompletedToday = workout.lastCompletedDate != nil &&
+            Calendar.current.isDateInToday(workout.lastCompletedDate!)
+
+        return VStack(alignment: .leading, spacing: 8) {
+            HStack {
+                Text(workout.name)
+                    .font(.headline)
+                    .foregroundColor(isWorkoutCompletedToday ? .gray : .primary)
+
+                Spacer()
+
+                if isWorkoutCompletedToday {
+                    Image(systemName: "checkmark.circle.fill")
+                        .foregroundColor(.green)
+                        .font(.title2)
+                }
+            }
+
+            HStack {
+                Text(workout.muscleGroup)
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 4)
+                    .background(Color.accentColor.opacity(0.2))
+                    .cornerRadius(8)
+
+                Spacer()
+
+                Text(workout.duration)
+                    .font(.subheadline)
+                    .foregroundColor(.secondary)
+            }
+
+            if let days = workout.days, !days.isEmpty {
+                HStack {
+                    Text("Days:")
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
+
+                    ForEach(days, id: \ .self) { day in
+                        Text(day)
+                            .font(.caption)
+                            .padding(.horizontal, 6)
+                            .padding(.vertical, 2)
+                            .background(Color.gray.opacity(0.2))
+                            .cornerRadius(4)
+                    }
+                }
+            }
+
+            if isWorkoutCompletedToday {
+                Text("Completed today")
+                    .font(.caption)
+                    .foregroundColor(.green)
+                    .padding(.top, 4)
+            }
+        }
+        .padding()
+        .background(Color.white)
+        .cornerRadius(12)
+        .shadow(color: Color.black.opacity(0.1), radius: 3, x: 0, y: 1)
+        .padding(.horizontal)
+    }
+
+    private func fetchFriendWorkouts() {
+        guard let currentUserId = Auth.auth().currentUser?.uid else {
+            self.error = "Not logged in"
+            self.isLoading = false
+            return
+        }
+
+        let db = Firestore.firestore()
+
+        db.collection("users").document(friend.id)
+            .collection("friends").document(currentUserId)
+            .getDocument { docSnapshot, error in
+                if let error = error {
+                    self.error = "Error checking friendship: \(error.localizedDescription)"
+                    self.isLoading = false
+                    return
+                }
+
+                guard let doc = docSnapshot, doc.exists else {
+                    self.error = "You're not friends with this user"
+                    self.isLoading = false
+                    return
+                }
+
+                fetchTodayWorkouts(for: friend.id)
+            }
+    }
+
+    private func fetchTodayWorkouts(for friendId: String) {
+        let db = Firestore.firestore()
+        let today = Date()
+        let startOfDay = Calendar.current.startOfDay(for: today)
+        let endOfDay = Calendar.current.date(byAdding: .day, value: 1, to: startOfDay)!
+
+        db.collection("users").document(friendId).collection("workouts")
+            .whereField("workoutDate", isGreaterThanOrEqualTo: Timestamp(date: startOfDay))
+            .whereField("workoutDate", isLessThan: Timestamp(date: endOfDay))
+            .getDocuments { snapshot, error in
+                self.isLoading = false
+
+                if let error = error {
+                    self.error = "Failed to load workouts: \(error.localizedDescription)"
+                    return
+                }
+
+                if let snapshot = snapshot {
+                    self.friendWorkouts = snapshot.documents.compactMap { doc in
+                        if let workoutDate = (doc["workoutDate"] as? Timestamp)?.dateValue() {
+                            let lastCompletedDate = (doc["lastCompletedDate"] as? Timestamp)?.dateValue()
+                            return Workout(
+                                id: doc.documentID,
+                                name: doc["workoutName"] as? String ?? "",
+                                muscleGroup: doc["muscleGroup"] as? String ?? "",
+                                days: doc["workoutDays"] as? [String] ?? [],
+                                duration: doc["duration"] as? String ?? "",
+                                date: workoutDate,
+                                lastCompletedDate: lastCompletedDate
+                            )
+                        }
+                        return nil
+                    }
+                }
+            }
+    }
+
+    private func sendNotification(message: String) {
+            guard let currentUserId = Auth.auth().currentUser?.uid else { return }
+            let db = Firestore.firestore()
+
+            let notification = [
+                "message": message,
+                "timestamp": FieldValue.serverTimestamp(),
+                "read": false
+            ] as [String: Any]
+
+            db.collection("users")
+                .document(friend.id)
+                .collection("notifications")
+                .addDocument(data: notification)
+        }
 }
-
-

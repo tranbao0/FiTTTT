@@ -17,8 +17,8 @@ struct AddFriendView: View {
     }
     
     var body: some View {
-        VStack(spacing: 0) {
-            // Search Bar
+        // Search Bar
+        VStack {
             HStack {
                 Image(systemName: "magnifyingglass")
                     .foregroundColor(.gray)
@@ -46,10 +46,11 @@ struct AddFriendView: View {
                     }
                 }
             }
-            .padding()
+            .padding(12)
             .background(Color(.systemGray6))
             .cornerRadius(10)
             .padding(.horizontal)
+            .padding(.top, 20)
             
             // Results or Initial User List
             if isSearching || isLoadingInitial {
@@ -401,28 +402,37 @@ struct AddFriendView: View {
             return
         }
         
-        // Update the UI immediately (optimistic update)
+        // Optimistically update UI
         updateUserStatus(userId: user.id, newStatus: .friends)
         
         let db = Firestore.firestore()
         let batch = db.batch()
         
-        // Update both users' friend request status
+        // 1. Update friendRequest statuses to "friends"
         let incomingRef = db.collection("users").document(currentUserId)
             .collection("friendRequests").document(user.id)
         
         let outgoingRef = db.collection("users").document(user.id)
             .collection("friendRequests").document(currentUserId)
         
-        let friendStatus = Friend.FriendStatus.friends.rawValue
+        batch.setData(["status": Friend.FriendStatus.friends.rawValue], forDocument: incomingRef, merge: true)
+        batch.setData(["status": Friend.FriendStatus.friends.rawValue], forDocument: outgoingRef, merge: true)
         
-        batch.setData(["status": friendStatus], forDocument: incomingRef, merge: true)
-        batch.setData(["status": friendStatus], forDocument: outgoingRef, merge: true)
+        // 2. Add to /friends/ subcollection for both users
+        let currentUserFriendRef = db.collection("users").document(currentUserId)
+            .collection("friends").document(user.id)
         
-        // Commit the batch
+        let otherUserFriendRef = db.collection("users").document(user.id)
+            .collection("friends").document(currentUserId)
+        
+        let timestamp = FieldValue.serverTimestamp()
+        
+        batch.setData(["since": timestamp], forDocument: currentUserFriendRef)
+        batch.setData(["since": timestamp], forDocument: otherUserFriendRef)
+        
+        // 3. Commit
         batch.commit { error in
             if let error = error {
-                // Revert the status on error
                 updateUserStatus(userId: user.id, newStatus: .requested)
                 errorMessage = "Error accepting friend request: \(error.localizedDescription)"
                 showingError = true

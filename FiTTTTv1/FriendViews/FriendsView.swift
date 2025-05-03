@@ -10,7 +10,7 @@ struct FriendsView: View {
     @State private var showingError = false
     @State private var showingAddFriends = false
     @State private var currentUser: Friend?
-    
+
     var sortedFriends: [Friend] {
         var allFriends = friends
         if let currentUser = currentUser {
@@ -18,36 +18,30 @@ struct FriendsView: View {
         }
         return allFriends.sorted { $0.streak > $1.streak }
     }
-    
+
     var topFriends: [Friend] {
         let ranked = sortedFriends.enumerated().map { index, friend in
             var rankedFriend = friend
             rankedFriend.rank = index + 1
             return rankedFriend
         }
-        
         return Array(ranked.prefix(3))
     }
-    
+
     var otherFriends: [Friend] {
         let ranked = sortedFriends.enumerated().map { index, friend in
             var rankedFriend = friend
             rankedFriend.rank = index + 1
             return rankedFriend
         }
-        
         return Array(ranked.dropFirst(3))
     }
-    
+
     var body: some View {
-        return VStack(spacing: 0) {
-            
-            // Header
+        VStack(spacing: 0) {
             AppHeaderView()
 
-            // Add Friends button and Pending Requests button
             HStack {
-                // Add Friend Button
                 Button(action: {
                     showingAddFriends = true
                 }) {
@@ -61,10 +55,9 @@ struct FriendsView: View {
                     .background(Color.black)
                     .cornerRadius(8)
                 }
-                
+
                 Spacer()
-                
-                // Pending Requests button - always visible
+
                 NavigationLink(destination: FriendRequestsView(requests: pendingRequests)) {
                     HStack {
                         if !pendingRequests.isEmpty {
@@ -80,7 +73,6 @@ struct FriendsView: View {
                                 .font(.system(size: 16))
                                 .foregroundColor(.black)
                         }
-                        
                         Text("Requests")
                             .foregroundColor(.primary)
                     }
@@ -93,27 +85,25 @@ struct FriendsView: View {
             .padding(.horizontal)
             .padding(.vertical, 8)
 
-            Group {
+            ScrollView {
                 if isLoading {
-                    Spacer()
                     ProgressView()
-                    Spacer()
+                        .padding(.top, 60)
                 } else if friends.isEmpty {
-                    // Empty state
                     VStack(spacing: 20) {
                         Image(systemName: "person.2.slash")
                             .font(.system(size: 60))
                             .foregroundColor(.gray)
-                        
+
                         Text("No Friends Yet")
                             .font(.title2)
                             .fontWeight(.semibold)
-                        
+
                         Text("Add friends to compare workouts and keep each other motivated!")
                             .multilineTextAlignment(.center)
                             .foregroundColor(.gray)
                             .padding(.horizontal, 40)
-                        
+
                         Button(action: {
                             showingAddFriends = true
                         }) {
@@ -125,25 +115,22 @@ struct FriendsView: View {
                                 .background(Color.black)
                                 .cornerRadius(12)
                         }
-                        .padding(.top, 10)
                     }
-                    .padding(.vertical, 60)
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .padding(.vertical, 40)
+                    .frame(maxWidth: .infinity)
                 } else {
-                    // Top 3 Circle Avatars
-                    if !topFriends.isEmpty {
-                        HStack(spacing: 30) {
-                            let reorderedTopFriends = reorderTopThree(topFriends)
-                            
-                            ForEach(reorderedTopFriends, id: \.id) { friend in
-                                if friend.id == Auth.auth().currentUser?.uid {
-                                    NavigationLink(destination: ProfileView()) {
+                    VStack(spacing: 0) {
+                        if !topFriends.isEmpty {
+                            HStack(spacing: 30) {
+                                let reorderedTopFriends = reorderTopThree(topFriends)
+
+                                ForEach(reorderedTopFriends, id: \.id) { friend in
+                                    NavigationLink(destination: friend.id == Auth.auth().currentUser?.uid ? AnyView(ProfileView()) : AnyView(FriendDetailView(friend: friend))) {
                                         VStack {
                                             ZStack {
                                                 Circle()
                                                     .stroke(Color.black, lineWidth: friend.rank == 1 ? 3 : 1)
                                                     .frame(width: 80, height: 80)
-                                                
                                                 Image(systemName: "person.circle.fill")
                                                     .resizable()
                                                     .scaledToFill()
@@ -155,6 +142,7 @@ struct FriendsView: View {
                                                 .font(.subheadline)
                                                 .bold()
                                                 .italic(friend.id == Auth.auth().currentUser?.uid)
+                                                .foregroundColor(.black)
                                             Text("Streak: \(friend.streak)")
                                                 .font(.caption)
                                                 .foregroundColor(.gray)
@@ -163,124 +151,85 @@ struct FriendsView: View {
                                                 .overlay(Text("\(friend.rank)").foregroundColor(.black).bold())
                                                 .frame(width: 24, height: 24)
                                         }
-                                    }
-                                } else {
-                                    NavigationLink(destination: FriendDetailView(friend: friend)) {
-                                        VStack {
-                                            ZStack {
-                                                Circle()
-                                                    .stroke(Color.black, lineWidth: friend.rank == 1 ? 3 : 1)
-                                                    .frame(width: 80, height: 80)
-                                                
-                                                Image(systemName: "person.circle.fill")
-                                                    .resizable()
-                                                    .scaledToFill()
-                                                    .frame(width: 70, height: 70)
-                                                    .clipShape(Circle())
-                                                    .foregroundColor(.gray)
-                                            }
-                                            Text(friend.id == Auth.auth().currentUser?.uid ? "You" : friend.name)
-                                                .font(.subheadline)
-                                                .bold()
-                                                .italic(friend.id == Auth.auth().currentUser?.uid)
-                                            Text("Streak: \(friend.streak)")
-                                                .font(.caption)
-                                                .foregroundColor(.gray)
+                                        .padding(8)
+                                        .background(
                                             Circle()
-                                                .foregroundColor(.green)
-                                                .overlay(Text("\(friend.rank)").foregroundColor(.black).bold())
-                                                .frame(width: 24, height: 24)
-                                        }
+                                                .fill(friend.streak == 0 ? Color.red.opacity(0.1) : Color.clear)
+                                                .frame(width: 100, height: 100)
+                                        )
                                     }
                                 }
                             }
+                            .padding(.vertical)
                         }
-                        .padding(.vertical)
-                    }
 
-                    // Friend List
-                    List {
-                        ForEach(otherFriends) { friend in
-                            if friend.id == Auth.auth().currentUser?.uid {
-                                NavigationLink(destination: ProfileView()) {
+                        VStack(spacing: 0) {
+                            ForEach(otherFriends) { friend in
+                                NavigationLink(destination: friend.id == Auth.auth().currentUser?.uid ? AnyView(ProfileView()) : AnyView(FriendDetailView(friend: friend))) {
                                     HStack {
                                         Text("\(friend.rank)")
                                             .font(.headline)
                                             .frame(width: 30)
-                                        
+                                            .foregroundColor(.black)
+
                                         Image(systemName: "person.circle.fill")
                                             .resizable()
                                             .frame(width: 30, height: 30)
                                             .clipShape(Circle())
                                             .foregroundColor(.gray)
-                                        
+
                                         Text(friend.id == Auth.auth().currentUser?.uid ? "You" : friend.name)
                                             .font(.headline)
                                             .italic(friend.id == Auth.auth().currentUser?.uid)
-                                        
+                                            .foregroundColor(.black)
+
                                         Spacer()
-                                        
+
                                         Text("Streak: \(friend.streak)")
                                             .fontWeight(.semibold)
+                                            .foregroundColor(.black)
                                     }
-                                    .padding(.vertical, 6)
+                                    .padding(.horizontal, 16)
+                                    .padding(.vertical, 12)
+                                    .background(friend.streak == 0 ? Color.red.opacity(0.1) : Color.white)  // Add red tinge here
+                                    .cornerRadius(12)
+                                    .shadow(color: Color.black.opacity(0.05), radius: 3, x: 0, y: 2)
                                 }
-                            } else {
-                                NavigationLink(destination: FriendDetailView(friend: friend)) {
-                                    HStack {
-                                        Text("\(friend.rank)")
-                                            .font(.headline)
-                                            .frame(width: 30)
-                                        
-                                        Image(systemName: "person.circle.fill")
-                                            .resizable()
-                                            .frame(width: 30, height: 30)
-                                            .clipShape(Circle())
-                                            .foregroundColor(.gray)
-                                        
-                                        Text(friend.id == Auth.auth().currentUser?.uid ? "You" : friend.name)
-                                            .font(.headline)
-                                            .italic(friend.id == Auth.auth().currentUser?.uid)
-                                        
-                                        Spacer()
-                                        
-                                        Text("Streak: \(friend.streak)")
-                                            .fontWeight(.semibold)
-                                    }
-                                    .padding(.vertical, 6)
-                                }
+                                .padding(.horizontal)
+                                .padding(.vertical, 4)
                             }
                         }
+                        .padding(.horizontal)
+                        .padding(.bottom, 80) // prevent bottom bar clipping
                     }
-                    .listStyle(.plain)
-
-                // Bottom Tab Bar
-                HStack {
-                    Spacer()
-                    NavigationLink(destination: ContentView()) {
-                        Image(systemName: "house")
-                            .font(.system(size: 24))
-                    }
-                    Spacer()
-                    NavigationLink(destination: LogWorkoutView()) {
-                        Image(systemName: "dumbbell")
-                            .font(.system(size: 24))
-                    }
-                    Spacer()
-                    Image(systemName: "person.2")
-                        .font(.system(size: 32))
-                    Spacer()
-                    NavigationLink(destination: CalendarView()) {
-                        Image(systemName: "calendar")
-                            .font(.system(size: 24))
-                    }
-                    Spacer()
                 }
-                .padding()
-                .background(Color.black)
-                .foregroundColor(.white)
             }
+
+            HStack {
+                Spacer()
+                NavigationLink(destination: ContentView()) {
+                    Image(systemName: "house")
+                        .font(.system(size: 24))
+                }
+                Spacer()
+                NavigationLink(destination: LogWorkoutView()) {
+                    Image(systemName: "dumbbell")
+                        .font(.system(size: 24))
+                }
+                Spacer()
+                Image(systemName: "person.2")
+                    .font(.system(size: 32))
+                Spacer()
+                NavigationLink(destination: CalendarView()) {
+                    Image(systemName: "calendar")
+                        .font(.system(size: 24))
+                }
+                Spacer()
             }
+            .padding()
+            .background(Color.black)
+            .foregroundColor(.white)
+        }
         .background(Color.white)
         .edgesIgnoringSafeArea(.bottom)
         .navigationBarHidden(true)
@@ -292,21 +241,12 @@ struct FriendsView: View {
             AddFriendView()
         }
         .alert(isPresented: $showingError) {
-            Alert(
-                title: Text("Error"),
-                message: Text(errorMessage),
-                dismissButton: .default(Text("OK"))
-            )
+            Alert(title: Text("Error"), message: Text(errorMessage), dismissButton: .default(Text("OK")))
         }
     }
-    
-    // Helper function to reorder top 3 friends
+
     func reorderTopThree(_ friends: [Friend]) -> [Friend] {
-        guard friends.count >= 3 else {
-                return friends
-            }
-        
-        // Rearrange to: #2, #1, #3
+        guard friends.count >= 3 else { return friends }
         return [friends[1], friends[0], friends[2]]
     }
     
@@ -424,5 +364,4 @@ struct FriendsView: View {
                     self.isLoading = false
                 }
             }
-    }
 }
