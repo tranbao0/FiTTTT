@@ -2,6 +2,7 @@ import SwiftUI
 import FirebaseAuth
 import FirebaseFirestore
 import PhotosUI
+import Combine
 
 struct ProfileView: View {
     @AppStorage("isLoggedIn") var isLoggedIn = false
@@ -9,7 +10,7 @@ struct ProfileView: View {
     @State private var email = ""
     @State private var streak = 0
     @State private var lastCheckIn: Date?
-    @State private var completedSessions = 0  // New state for tracking completed sessions
+    @State private var completedSessions = 0
     @State private var error = ""
     @State private var isLoading = true
     
@@ -42,8 +43,8 @@ struct ProfileView: View {
                         ))
                         .frame(height: 180)
                     
-                    // Profile image
-                    VStack {
+                    // Profile image and username
+                    VStack(spacing: 8) {
                         PhotosPicker(selection: $pickerItem, matching: .images) {
                             if let selectedImage = selectedImage {
                                 Image(uiImage: selectedImage)
@@ -73,12 +74,15 @@ struct ProfileView: View {
                             }
                         }
                         
-                        // Username
-                        Text(username)
+                        // Username - Fixed the display issue
+                        Text(username.isEmpty ? "Loading..." : username)
                             .font(.title2)
                             .fontWeight(.bold)
-                            .foregroundColor(.white)
-                            .padding(.top, 8)
+                            .foregroundColor(.black)
+                            .lineLimit(1)
+                            .truncationMode(.tail)
+                            .frame(maxWidth: .infinity)
+                            .padding(.horizontal, 16)
                     }
                     .offset(y: 60)
                 }
@@ -126,7 +130,7 @@ struct ProfileView: View {
                                 subtitle: lastCheckInText()
                             )
                             
-                            // Completed Sessions card - replacing total workouts
+                            // Completed Sessions card
                             statsCard(
                                 icon: "checkmark.circle.fill",
                                 iconColor: .green,
@@ -137,7 +141,7 @@ struct ProfileView: View {
                         }
                         
                         HStack(spacing: 15) {
-                            // This week card - now showing completions this week
+                            // This week card
                             statsCard(
                                 icon: "calendar",
                                 iconColor: .blue,
@@ -191,7 +195,7 @@ struct ProfileView: View {
             loadProfile()
         }
         .navigationBarBackButtonHidden(true)
-        .navigationBarHidden(true) // Hide the navigation bar completely for custom header
+        .navigationBarHidden(true)
     }
     
     private func statsCard(icon: String, iconColor: Color, title: String, value: String, subtitle: String) -> some View {
@@ -267,28 +271,44 @@ struct ProfileView: View {
             }
             
             if let data = snapshot?.data() {
-                username = data["username"] as? String ?? "Unknown"
-                email = data["email"] as? String ?? "Unknown"
-                streak = data["streak"] as? Int ?? 0
-                completedSessions = data["completedSessions"] as? Int ?? 0  // Get completed sessions count
+                // Debug: Check what data is being received
+                print("Raw data from Firebase: \(data)")
                 
-                // Get the last check-in date
-                if let lastCheckInTimestamp = data["lastCheckIn"] as? Timestamp {
-                    lastCheckIn = lastCheckInTimestamp.dateValue()
+                // Try to get username with different possible field names
+                let possibleUsername = data["username"] as? String ??
+                                      data["userName"] as? String ??
+                                      data["name"] as? String
+                
+                print("Username from Firebase: '\(possibleUsername ?? "nil")'")
+                
+                DispatchQueue.main.async {
+                    self.username = possibleUsername ?? "Unknown"
+                    self.email = data["email"] as? String ?? "Unknown"
+                    self.streak = data["streak"] as? Int ?? 0
+                    self.completedSessions = data["completedSessions"] as? Int ?? 0
+                    
+                    print("Final username: '\(self.username)'")
+                    
+                    // Get the last check-in date
+                    if let lastCheckInTimestamp = data["lastCheckIn"] as? Timestamp {
+                        self.lastCheckIn = lastCheckInTimestamp.dateValue()
+                    }
+                    
+                    self.isLoading = false
                 }
                 
-                // Get total workouts count (plans)
+                // Now fetch additional data in background
                 countTotalWorkouts(uid: uid)
-                
-                // Count workouts completed this week
                 countCompletedSessionsThisWeek(uid: uid)
             } else {
-                error = "User data not found"
-                isLoading = false
+                DispatchQueue.main.async {
+                    self.error = "User data not found"
+                    self.isLoading = false
+                }
             }
         }
     }
-    
+
     private func countTotalWorkouts(uid: String) {
         let db = Firestore.firestore()
         db.collection("users").document(uid).collection("workouts")
@@ -296,17 +316,13 @@ struct ProfileView: View {
                 if let error = error {
                     print("Error fetching workout count: \(error.localizedDescription)")
                 } else {
-                    totalWorkouts = snapshot?.documents.count ?? 0
-                }
-                
-                // Complete loading if this is the last operation
-                if completedThisWeek != 0 {
-                    isLoading = false
+                    DispatchQueue.main.async {
+                        self.totalWorkouts = snapshot?.documents.count ?? 0
+                    }
                 }
             }
     }
-    
-    // Updated to count completed sessions this week
+
     private func countCompletedSessionsThisWeek(uid: String) {
         let db = Firestore.firestore()
         let calendar = Calendar.current
@@ -321,14 +337,13 @@ struct ProfileView: View {
             .getDocuments { snapshot, error in
                 if let error = error {
                     print("Error fetching weekly completed sessions: \(error.localizedDescription)")
-                    completedThisWeek = 0
+                    DispatchQueue.main.async {
+                        self.completedThisWeek = 0
+                    }
                 } else {
-                    completedThisWeek = snapshot?.documents.count ?? 0
-                }
-                
-                // Complete loading if this is the last operation
-                if totalWorkouts != 0 {
-                    isLoading = false
+                    DispatchQueue.main.async {
+                        self.completedThisWeek = snapshot?.documents.count ?? 0
+                    }
                 }
             }
     }

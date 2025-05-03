@@ -103,6 +103,7 @@ struct SignUpView: View {
                             .font(.title3)
                             .foregroundColor(.black)
                         SecureField("•••••••••••••••", text: $password)
+                            .textContentType(.oneTimeCode)
                             .padding(.bottom, 8)
                             .overlay(
                                 Rectangle().frame(height: 1).foregroundColor(.black),

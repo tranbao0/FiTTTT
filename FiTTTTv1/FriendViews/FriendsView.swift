@@ -35,206 +35,207 @@ struct FriendsView: View {
     }
     
     var body: some View {
-        NavigationStack {
-            VStack(spacing: 0) {
-                // Header
-                HStack {
-                    Image(systemName: "line.horizontal.3")
-                    Spacer()
-                    Text("Friends")
-                        .font(.title)
-                        .bold()
-                    Spacer()
-                    NavigationLink(destination: ProfileView()) {
-                        Image(systemName: "person.crop.circle")
+        VStack(spacing: 0) {
+            // Header
+            HStack {
+                Image(systemName: "line.horizontal.3")
+                Spacer()
+                Text("Friends")
+                    .font(.title)
+                    .bold()
+                Spacer()
+                NavigationLink(destination: ProfileView()) {
+                    Image(systemName: "person.crop.circle")
+                }
+            }
+            .padding(.horizontal)
+            .padding(.vertical, 12)
+            .background(Color.white)
+
+            // Add Friends button and Search Bar
+            HStack {
+                // Add Friend Button
+                Button(action: {
+                    showingAddFriends = true
+                }) {
+                    HStack {
+                        Image(systemName: "person.badge.plus")
+                        Text("Add Friends")
+                    }
+                    .foregroundColor(.white)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 8)
+                    .background(Color.black)
+                    .cornerRadius(8)
+                }
+                
+                Spacer()
+                
+                // Pending Requests indicator
+                if !pendingRequests.isEmpty {
+                    NavigationLink(destination: FriendRequestsView(requests: pendingRequests)) {
+                        HStack {
+                            Text("\(pendingRequests.count)")
+                                .font(.caption)
+                                .fontWeight(.bold)
+                                .foregroundColor(.white)
+                                .frame(width: 24, height: 24)
+                                .background(Color.red)
+                                .clipShape(Circle())
+                            
+                            Text("Requests")
+                                .foregroundColor(.primary)
+                        }
                     }
                 }
-                .padding(.horizontal)
-                .padding(.top)
+            }
+            .padding(.horizontal)
+            .padding(.vertical, 8)
 
-                // Add Friends button and Search Bar
-                HStack {
-                    // Add Friend Button
+            if isLoading {
+                Spacer()
+                ProgressView()
+                Spacer()
+            } else if friends.isEmpty {
+                // Empty state
+                VStack(spacing: 20) {
+                    Image(systemName: "person.2.slash")
+                        .font(.system(size: 60))
+                        .foregroundColor(.gray)
+                    
+                    Text("No Friends Yet")
+                        .font(.title2)
+                        .fontWeight(.semibold)
+                    
+                    Text("Add friends to compare workouts and keep each other motivated!")
+                        .multilineTextAlignment(.center)
+                        .foregroundColor(.gray)
+                        .padding(.horizontal, 40)
+                    
                     Button(action: {
                         showingAddFriends = true
                     }) {
-                        HStack {
-                            Image(systemName: "person.badge.plus")
-                            Text("Add Friends")
-                        }
-                        .foregroundColor(.white)
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 8)
-                        .background(Color.black)
-                        .cornerRadius(8)
-                    }
-                    
-                    Spacer()
-                    
-                    // Pending Requests indicator
-                    if !pendingRequests.isEmpty {
-                        NavigationLink(destination: FriendRequestsView(requests: pendingRequests)) {
-                            HStack {
-                                Text("\(pendingRequests.count)")
-                                    .font(.caption)
-                                    .fontWeight(.bold)
-                                    .foregroundColor(.white)
-                                    .frame(width: 24, height: 24)
-                                    .background(Color.red)
-                                    .clipShape(Circle())
-                                
-                                Text("Requests")
-                                    .foregroundColor(.primary)
-                            }
-                        }
-                    }
-                }
-                .padding(.horizontal)
-                .padding(.vertical, 8)
-
-                if isLoading {
-                    Spacer()
-                    ProgressView()
-                    Spacer()
-                } else if friends.isEmpty {
-                    // Empty state
-                    VStack(spacing: 20) {
-                        Image(systemName: "person.2.slash")
-                            .font(.system(size: 60))
-                            .foregroundColor(.gray)
-                        
-                        Text("No Friends Yet")
-                            .font(.title2)
+                        Text("Find Friends")
                             .fontWeight(.semibold)
-                        
-                        Text("Add friends to compare workouts and keep each other motivated!")
-                            .multilineTextAlignment(.center)
-                            .foregroundColor(.gray)
-                            .padding(.horizontal, 40)
-                        
-                        Button(action: {
-                            showingAddFriends = true
-                        }) {
-                            Text("Find Friends")
-                                .fontWeight(.semibold)
-                                .foregroundColor(.white)
-                                .frame(width: 200)
-                                .padding()
-                                .background(Color.black)
-                                .cornerRadius(12)
-                        }
-                        .padding(.top, 10)
+                            .foregroundColor(.white)
+                            .frame(width: 200)
+                            .padding()
+                            .background(Color.black)
+                            .cornerRadius(12)
                     }
-                    .padding(.vertical, 60)
-                } else {
-                    // Top 3 Circle Avatars
-                    if !topFriends.isEmpty {
-                        HStack(spacing: 30) {
-                            ForEach(topFriends) { friend in
-                                NavigationLink(destination: FriendDetailView(friend: friend)) {
-                                    VStack {
-                                        ZStack {
-                                            Circle()
-                                                .stroke(Color.black, lineWidth: friend.rank == 1 ? 3 : 1)
-                                                .frame(width: 80, height: 80)
-                                            
-                                            // Use actual profile image if available
-                                            Image(systemName: "person.circle.fill")
-                                                .resizable()
-                                                .scaledToFill()
-                                                .frame(width: 70, height: 70)
-                                                .clipShape(Circle())
-                                                .foregroundColor(.gray)
-                                        }
-                                        Text(friend.name)
-                                            .font(.subheadline)
-                                            .bold()
-                                        Text("\(friend.points) pts")
-                                            .font(.caption)
-                                            .foregroundColor(.gray)
-                                        Circle()
-                                            .foregroundColor(.green)
-                                            .overlay(Text("\(friend.rank)").foregroundColor(.black).bold())
-                                            .frame(width: 24, height: 24)
-                                    }
-                                }
-                            }
-                        }
-                        .padding(.vertical)
-                    }
-
-                    // Friend List
-                    List {
-                        ForEach(otherFriends) { friend in
+                    .padding(.top, 10)
+                }
+                .padding(.vertical, 60)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+            } else {
+                // Top 3 Circle Avatars
+                if !topFriends.isEmpty {
+                    HStack(spacing: 30) {
+                        ForEach(topFriends) { friend in
                             NavigationLink(destination: FriendDetailView(friend: friend)) {
-                                HStack {
-                                    Text("\(friend.rank)")
-                                        .font(.headline)
-                                        .frame(width: 30)
-                                    
-                                    Image(systemName: "person.circle.fill")
-                                        .resizable()
-                                        .frame(width: 30, height: 30)
-                                        .clipShape(Circle())
-                                        .foregroundColor(.gray)
-                                    
+                                VStack {
+                                    ZStack {
+                                        Circle()
+                                            .stroke(Color.black, lineWidth: friend.rank == 1 ? 3 : 1)
+                                            .frame(width: 80, height: 80)
+                                        
+                                        // Use actual profile image if available
+                                        Image(systemName: "person.circle.fill")
+                                            .resizable()
+                                            .scaledToFill()
+                                            .frame(width: 70, height: 70)
+                                            .clipShape(Circle())
+                                            .foregroundColor(.gray)
+                                    }
                                     Text(friend.name)
-                                        .font(.headline)
-                                    
-                                    Spacer()
-                                    
+                                        .font(.subheadline)
+                                        .bold()
                                     Text("\(friend.points) pts")
-                                        .fontWeight(.semibold)
+                                        .font(.caption)
+                                        .foregroundColor(.gray)
+                                    Circle()
+                                        .foregroundColor(.green)
+                                        .overlay(Text("\(friend.rank)").foregroundColor(.black).bold())
+                                        .frame(width: 24, height: 24)
                                 }
-                                .padding(.vertical, 6)
                             }
                         }
                     }
-                    .listStyle(.plain)
+                    .padding(.vertical)
                 }
 
-                // Bottom Tab Bar
-                HStack {
-                    Spacer()
-                    NavigationLink(destination: ContentView()) {
-                        Image(systemName: "house")
-                            .font(.system(size: 24))
+                // Friend List
+                List {
+                    ForEach(otherFriends) { friend in
+                        NavigationLink(destination: FriendDetailView(friend: friend)) {
+                            HStack {
+                                Text("\(friend.rank)")
+                                    .font(.headline)
+                                    .frame(width: 30)
+                                
+                                Image(systemName: "person.circle.fill")
+                                    .resizable()
+                                    .frame(width: 30, height: 30)
+                                    .clipShape(Circle())
+                                    .foregroundColor(.gray)
+                                
+                                Text(friend.name)
+                                    .font(.headline)
+                                
+                                Spacer()
+                                
+                                Text("\(friend.points) pts")
+                                    .fontWeight(.semibold)
+                            }
+                            .padding(.vertical, 6)
+                        }
                     }
-                    Spacer()
-                    NavigationLink(destination: LogWorkoutView()) {
-                        Image(systemName: "dumbbell")
-                            .font(.system(size: 24))
-                    }
-                    Spacer()
-                    Image(systemName: "person.2")
-                        .font(.system(size: 32))
-                    Spacer()
-                    NavigationLink(destination: CalendarView()) {
-                        Image(systemName: "calendar")
-                            .font(.system(size: 24))
-                    }
-                    Spacer()
                 }
-                .padding()
-                .background(Color.black)
-                .foregroundColor(.white)
+                .listStyle(.plain)
             }
-            .background(Color.white)
-            .edgesIgnoringSafeArea(.bottom)
-            .navigationBarBackButtonHidden(true)
-            .onAppear {
-                loadFriends()
+
+            // Bottom Tab Bar
+            HStack {
+                Spacer()
+                NavigationLink(destination: ContentView()) {
+                    Image(systemName: "house")
+                        .font(.system(size: 24))
+                }
+                Spacer()
+                NavigationLink(destination: LogWorkoutView()) {
+                    Image(systemName: "dumbbell")
+                        .font(.system(size: 24))
+                }
+                Spacer()
+                Image(systemName: "person.2")
+                    .font(.system(size: 32))
+                Spacer()
+                NavigationLink(destination: CalendarView()) {
+                    Image(systemName: "calendar")
+                        .font(.system(size: 24))
+                }
+                Spacer()
             }
-            .sheet(isPresented: $showingAddFriends) {
-                AddFriendView()
-            }
-            .alert(isPresented: $showingError) {
-                Alert(
-                    title: Text("Error"),
-                    message: Text(errorMessage),
-                    dismissButton: .default(Text("OK"))
-                )
-            }
+            .padding()
+            .background(Color.black)
+            .foregroundColor(.white)
+        }
+        .background(Color.white)
+        .ignoresSafeArea(.container, edges: [.top, .bottom])  // Add this line
+        .navigationBarHidden(true)
+        .navigationBarBackButtonHidden(true)
+        .onAppear {
+            loadFriends()
+        }
+        .sheet(isPresented: $showingAddFriends) {
+            AddFriendView()
+        }
+        .alert(isPresented: $showingError) {
+            Alert(
+                title: Text("Error"),
+                message: Text(errorMessage),
+                dismissButton: .default(Text("OK"))
+            )
         }
     }
     
