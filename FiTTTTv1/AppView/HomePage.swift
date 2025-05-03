@@ -163,7 +163,6 @@ struct ContentView: View {
             VStack(spacing: 0) {
                 // Header (keeping your existing header code)
                 HStack {
-                    Image(systemName: "line.horizontal.3")
                     Spacer()
                     VStack(spacing: 4) {
                         Image("FiTTTTLogoBlacked")
