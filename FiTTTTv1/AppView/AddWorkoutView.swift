@@ -55,6 +55,7 @@ struct LogWorkoutView: View {
     var body: some View {
         VStack(spacing: 0) {
             // Content
+            AppHeaderView()
             ScrollView {
                 VStack(alignment: .leading, spacing: 24) {
                     // Header
@@ -307,7 +308,7 @@ struct LogWorkoutView: View {
             }
             .padding()
             .background(
-                isFormValid ? Color.accentColor : Color.gray
+                isFormValid ? Color.accentColor : Color.black
             )
             .cornerRadius(16)
             .shadow(color: Color.black.opacity(0.1), radius: 5, x: 0, y: 2)

@@ -18,24 +18,37 @@ struct AddFriendView: View {
     
     var body: some View {
         VStack(spacing: 0) {
-            // Header
-            HStack {
-                Button(action: {
-                    presentationMode.wrappedValue.dismiss()
-                }) {
-                    Image(systemName: "arrow.left")
-                        .font(.title3)
+            // Add Friends and Requests buttons section
+            HStack(spacing: 12) {
+                // Add Friends button (current view)
+                HStack {
+                    Image(systemName: "person.crop.circle.badge.plus")
+                        .font(.system(size: 18))
+                        .foregroundColor(.white)
+                    Text("Add Friends")
+                        .font(.headline)
+                        .foregroundColor(.white)
                 }
+                .padding(.horizontal, 16)
+                .padding(.vertical, 10)
+                .background(Color.black)
+                .cornerRadius(25)
                 
-                Spacer()
-                
-                Text("Add Friends")
-                    .font(.title2)
-                    .bold()
-                
-                Spacer()
+                // Requests button
+                NavigationLink(destination: FriendRequestsView(requests: [])) {
+                    HStack(spacing: 4) {
+                        Text("Requests")
+                            .font(.headline)
+                            .foregroundColor(.black)
+                        Circle()
+                            .fill(Color.red)
+                            .frame(width: 25, height: 25)
+                            .overlay(Text("1").font(.caption).bold().foregroundColor(.white))
+                    }
+                }
             }
-            .padding()
+            .padding(.horizontal)
+            .padding(.vertical, 16)
             
             // Search Bar
             HStack {
@@ -173,7 +186,7 @@ struct AddFriendView: View {
         }
     }
     
-    // Load initial list of users
+    // All your existing functions remain exactly the same
     private func loadAllUsers() {
         guard let currentUserId = Auth.auth().currentUser?.uid else {
             errorMessage = "You need to be logged in to see users"

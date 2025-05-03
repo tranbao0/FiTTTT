@@ -61,6 +61,34 @@ struct CourseDetailView: View {
     }
 }
 
+struct AppHeaderView: View {
+    var body: some View {
+        HStack {
+            Image(systemName: "line.horizontal.3")
+            Spacer()
+            VStack(spacing: 4) {
+                Image("FiTTTTLogoBlacked")
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+                    .frame(width: 140, height: 40)
+                Text("Accountability in Fitness")
+                    .font(.subheadline)
+                    .foregroundColor(.black)
+            }
+            Spacer()
+            NavigationLink(destination: ProfileView()) {
+                Image(systemName: "person.crop.circle")
+                    .resizable()
+                    .frame(width: 30, height: 30)
+                    .foregroundColor(.black)
+            }
+        }
+        .padding()
+        .background(Color.white)
+        .overlay(Rectangle().frame(height: 1).foregroundColor(.black), alignment: .bottom)
+    }
+}
+
 struct ContentView: View {
     @State private var hasCheckedInToday: Bool = false
     @State private var streak: Int = 0
@@ -161,8 +189,8 @@ struct ContentView: View {
     var body: some View {
         NavigationStack {
             VStack(spacing: 0) {
-                // Header (keeping your existing header code)
                 HStack {
+                    Image(systemName: "line.horizontal.3")
                     Spacer()
                     VStack(spacing: 4) {
                         Image("FiTTTTLogoBlacked")
@@ -203,7 +231,7 @@ struct ContentView: View {
                                     .frame(height: 50)
                                     .background(Color.black)
                                     .foregroundColor(.white)
-                                    .cornerRadius(25)
+                                    .cornerRadius(16)
                                     .padding(.horizontal)
                             }
                             
@@ -218,7 +246,7 @@ struct ContentView: View {
                                         .frame(height: 50)
                                         .background(Color.green)
                                         .foregroundColor(.white)
-                                        .cornerRadius(25)
+                                        .cornerRadius(16)
                                         .padding(.horizontal)
                                 }
                                 .padding(.top, 8)

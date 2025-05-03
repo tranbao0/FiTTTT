@@ -33,6 +33,7 @@ struct CalendarView: View {
     
     var body: some View {
         VStack(spacing: 0) {
+            AppHeaderView()
             // Calendar content
             FSCalendarView(workouts: workouts, selectedDate: $selectedDate, getWorkoutsForDate: getWorkoutsForDate)
                 .onAppear {

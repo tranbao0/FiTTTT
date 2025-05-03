@@ -37,20 +37,7 @@ struct FriendsView: View {
     var body: some View {
         VStack(spacing: 0) {
             // Header
-            HStack {
-                Image(systemName: "line.horizontal.3")
-                Spacer()
-                Text("Friends")
-                    .font(.title)
-                    .bold()
-                Spacer()
-                NavigationLink(destination: ProfileView()) {
-                    Image(systemName: "person.crop.circle")
-                }
-            }
-            .padding(.horizontal)
-            .padding(.vertical, 12)
-            .background(Color.white)
+            AppHeaderView()
 
             // Add Friends button and Search Bar
             HStack {
@@ -221,7 +208,7 @@ struct FriendsView: View {
             .foregroundColor(.white)
         }
         .background(Color.white)
-        .ignoresSafeArea(.container, edges: [.top, .bottom])  // Add this line
+        .edgesIgnoringSafeArea(.bottom)
         .navigationBarHidden(true)
         .navigationBarBackButtonHidden(true)
         .onAppear {
